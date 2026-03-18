@@ -240,6 +240,20 @@ input, select, textarea, button { font-family: var(--font-body); }
 }
 .field-input::placeholder { color: var(--text-4); }
 
+/* ── password field wrapper ── */
+.pw-wrap { position: relative; }
+.pw-wrap .field-input { padding-right: 46px; }
+.pw-eye {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 44px; display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); font-size: 17px;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  transition: color .2s;
+}
+.pw-eye:hover { color: var(--text-1); }
+.pw-eye:active { transform: scale(.9); }
+
 .auth-error {
   font-size: 13px; color: var(--rose);
   background: var(--rose-soft);
@@ -1363,8 +1377,11 @@ html.theme-anim *::after {
         </div>
         <div class="field">
           <label class="field-label">Password</label>
-          <input type="password" class="field-input" id="inPass" placeholder="Password Anda"
-            onkeydown="if(event.key==='Enter')doLogin()"/>
+          <div class="pw-wrap">
+            <input type="password" class="field-input" id="inPass" placeholder="Password Anda"
+              onkeydown="if(event.key==='Enter')doLogin()"/>
+            <button type="button" class="pw-eye" onclick="togglePw('inPass',this)" tabindex="-1" aria-label="Tampilkan password">👁</button>
+          </div>
         </div>
         <button class="btn-primary" id="btnMasuk" onclick="doLogin()">Masuk →</button>
         <div class="auth-link-row">
@@ -1384,8 +1401,11 @@ html.theme-anim *::after {
         </div>
         <div class="field">
           <label class="field-label">Password</label>
-          <input type="password" class="field-input" id="inRegPass" placeholder="Minimal 6 karakter"
-            oninput="checkPassStrength(this.value)"/>
+          <div class="pw-wrap">
+            <input type="password" class="field-input" id="inRegPass" placeholder="Minimal 6 karakter"
+              oninput="checkPassStrength(this.value)"/>
+            <button type="button" class="pw-eye" onclick="togglePw('inRegPass',this)" tabindex="-1" aria-label="Tampilkan password">👁</button>
+          </div>
           <div class="pass-strength" id="passStrength">
             <div class="pass-strength-fill" id="passStrengthFill"></div>
           </div>
@@ -1425,16 +1445,22 @@ html.theme-anim *::after {
       <div id="newPassForm">
         <div class="field">
           <label class="field-label">Password Baru</label>
-          <input type="password" class="field-input" id="newPassInput" placeholder="Minimal 6 karakter"
-            oninput="checkPassStrength(this.value,'newPassStrength','newPassFill')"/>
+          <div class="pw-wrap">
+            <input type="password" class="field-input" id="newPassInput" placeholder="Minimal 6 karakter"
+              oninput="checkPassStrength(this.value,'newPassStrength','newPassFill')"/>
+            <button type="button" class="pw-eye" onclick="togglePw('newPassInput',this)" tabindex="-1" aria-label="Tampilkan password">👁</button>
+          </div>
           <div class="pass-strength" id="newPassStrength">
             <div class="pass-strength-fill" id="newPassFill"></div>
           </div>
         </div>
         <div class="field">
           <label class="field-label">Konfirmasi Password</label>
-          <input type="password" class="field-input" id="newPassConfirm" placeholder="Ulangi password baru"
-            onkeydown="if(event.key==='Enter')doSetNewPassword()"/>
+          <div class="pw-wrap">
+            <input type="password" class="field-input" id="newPassConfirm" placeholder="Ulangi password baru"
+              onkeydown="if(event.key==='Enter')doSetNewPassword()"/>
+            <button type="button" class="pw-eye" onclick="togglePw('newPassConfirm',this)" tabindex="-1" aria-label="Tampilkan password">👁</button>
+          </div>
         </div>
         <button class="btn-primary" id="btnNewPass" onclick="doSetNewPassword()">Simpan Password Baru →</button>
       </div>
@@ -2644,6 +2670,15 @@ function fDate(iso) { if(!iso)return'—'; const d=new Date(iso); return d.toLoc
 function relTime(iso) { const diff=Date.now()-new Date(iso); const m=Math.floor(diff/60000); if(m<1)return'baru saja'; if(m<60)return m+'m lalu'; const h=Math.floor(m/60); if(h<24)return h+'j lalu'; return Math.floor(h/24)+'h lalu'; }
 function ownerName(oid) { const p=allProfs.find(x=>x.id===oid); return p?.full_name||p?.email||'—'; }
 function hsh(s) { let h=0; for(let i=0;i<(s||'').length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0} return h; }
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  inp.focus();
+}
 
 function quickToggleTheme() {
   const isNowLight = !document.documentElement.classList.contains('light');
