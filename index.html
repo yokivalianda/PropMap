@@ -1073,6 +1073,153 @@ input, select, textarea, button { font-family: var(--font-body); }
 .av7 { background: linear-gradient(135deg,#ec4899,#db2777); }
 
 select option { background: #111118; color: var(--text-1); }
+html.light select option { background: #ffffff; color: #0f0f1a; }
+
+/* ════════════════════════════════════════
+   LIGHT THEME — Pearl White
+════════════════════════════════════════ */
+html.light {
+  --bg-base:     #f5f5fa;
+  --bg-raised:   #eeeef6;
+  --bg-overlay:  #ffffff;
+  --bg-elevated: #f9f9fd;
+  --bg-float:    #ededf5;
+
+  --glass-10: rgba(0,0,0,0.03);
+  --glass-20: rgba(0,0,0,0.05);
+  --glass-30: rgba(0,0,0,0.07);
+  --glass-border: rgba(0,0,0,0.08);
+  --glass-border-hi: rgba(0,0,0,0.14);
+
+  --brand:       #4f46e5;
+  --brand-light: #6366f1;
+  --brand-glow:  rgba(79,70,229,0.25);
+  --brand-soft:  rgba(79,70,229,0.10);
+
+  --emerald:      #059669;
+  --emerald-soft: rgba(5,150,105,0.10);
+  --amber:        #d97706;
+  --amber-soft:   rgba(217,119,6,0.10);
+  --rose:         #e11d48;
+  --rose-soft:    rgba(225,29,72,0.10);
+  --violet:       #7c3aed;
+  --violet-soft:  rgba(124,58,237,0.10);
+  --sky:          #0284c7;
+  --sky-soft:     rgba(2,132,199,0.10);
+
+  --text-1: #0f0f1a;
+  --text-2: #4a4a6a;
+  --text-3: #9090b0;
+  --text-4: #b8b8cc;
+
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:  0 4px 24px rgba(0,0,0,0.09);
+  --shadow-lg:  0 12px 48px rgba(0,0,0,0.13);
+  --shadow-brand: 0 8px 32px rgba(79,70,229,0.20);
+}
+
+/* Light mode specific overrides */
+html.light .dash-hero {
+  background: linear-gradient(160deg, #dde0ff 0%, #f5f5fa 70%);
+}
+html.light .dash-hero::after {
+  background-image:
+    linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px);
+}
+html.light .hero-name {
+  background: linear-gradient(135deg, var(--text-1), var(--text-2));
+  -webkit-background-clip: text; background-clip: text;
+}
+html.light .header {
+  background: rgba(245,245,250,.9);
+  border-bottom-color: var(--glass-border);
+}
+html.light .tabbar {
+  background: rgba(245,245,250,.95);
+}
+html.light .modal-bg { background: rgba(0,0,0,.4); }
+html.light .auth {
+  background: var(--bg-base);
+}
+html.light #auth::before {
+  opacity: .18;
+}
+html.light #auth::after {
+  opacity: .12;
+}
+html.light .kons-card.st-booking {
+  background: linear-gradient(135deg, rgba(79,70,229,.05) 0%, var(--bg-overlay) 60%);
+}
+html.light .kons-card.st-selesai {
+  background: linear-gradient(135deg, rgba(5,150,105,.05) 0%, var(--bg-overlay) 60%);
+}
+html.light .kons-card.st-batal {
+  background: linear-gradient(135deg, rgba(225,29,72,.04) 0%, var(--bg-overlay) 60%);
+}
+html.light .det-hero {
+  background: var(--bg-raised);
+}
+html.light .set-profile-hero {
+  background: var(--bg-raised);
+}
+html.light .search-zone {
+  background: rgba(245,245,250,.9);
+}
+
+/* ── Theme transition — smooth global ── */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color .3s ease,
+    border-color .3s ease,
+    color .3s ease,
+    box-shadow .3s ease,
+    opacity .3s ease !important;
+}
+
+/* ── Theme toggle switch ── */
+.theme-toggle-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+}
+.theme-toggle-info { flex: 1; }
+.theme-toggle-name { font-size: 14px; font-weight: 600; letter-spacing: -.2px; }
+.theme-toggle-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+.toggle-pill {
+  position: relative; width: 52px; height: 28px; flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle-pill input {
+  position: absolute; opacity: 0; width: 0; height: 0;
+}
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--bg-float);
+  border: 1.5px solid var(--glass-border);
+  border-radius: var(--r-full);
+  transition: background .3s, border-color .3s;
+}
+.toggle-pill input:checked + .toggle-track {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--text-3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), background .3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle-pill input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(24px);
+  background: #fff;
+}
 </style>
 </head>
 <body>
@@ -1150,6 +1297,7 @@ select option { background: #111118; color: var(--text-1); }
         <span class="pill-uname" id="hName">—</span>
         <span class="pill-role" id="hRole">Marketing</span>
       </div>
+      <button class="hbtn" id="themeBtnHdr" onclick="quickToggleTheme()" title="Ganti tema">🌙</button>
       <button class="hbtn" onclick="openNotif()" id="notifBtn">
         🔔<span class="notif-pip" id="notifPip"></span>
       </button>
@@ -1319,6 +1467,24 @@ select option { background: #111118; color: var(--text-1); }
               <div class="set-row-desc">Download semua data (JSON)</div>
             </div>
             <div class="set-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-group-label">Tampilan</div>
+        <div class="set-form">
+          <div class="theme-toggle-wrap">
+            <div class="theme-toggle-info">
+              <div class="theme-toggle-name" id="themeLabel">🌙 Tema Gelap</div>
+              <div class="theme-toggle-desc" id="themeDesc">Saat ini menggunakan tema gelap</div>
+            </div>
+            <label class="toggle-pill">
+              <input type="checkbox" id="themeToggle" onchange="toggleTheme(this.checked)"/>
+              <div class="toggle-track">
+                <div class="toggle-thumb" id="toggleThumb">🌙</div>
+              </div>
+            </label>
           </div>
         </div>
       </div>
@@ -2138,7 +2304,60 @@ function relTime(iso) { const diff=Date.now()-new Date(iso); const m=Math.floor(
 function ownerName(oid) { const p=allProfs.find(x=>x.id===oid); return p?.full_name||p?.email||'—'; }
 function hsh(s) { let h=0; for(let i=0;i<(s||'').length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0} return h; }
 
+function quickToggleTheme() {
+  const isNowLight = !document.documentElement.classList.contains('light');
+  localStorage.setItem('mp_theme', isNowLight ? 'light' : 'dark');
+  applyTheme(isNowLight, true);
+  // update header icon
+  const btn = document.getElementById('themeBtnHdr');
+  if (btn) btn.textContent = isNowLight ? '☀️' : '🌙';
+  showToast(isNowLight ? 'Tema terang aktif ☀️' : 'Tema gelap aktif 🌙', '');
+}
+
+// ── THEME ─────────────────────────────────────────
+function applyTheme(isLight, animate) {
+  const html = document.documentElement;
+  if (animate) {
+    html.classList.add('theme-anim');
+    setTimeout(() => html.classList.remove('theme-anim'), 400);
+  }
+  html.classList.toggle('light', isLight);
+
+  // Update meta theme-color for browser chrome
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', isLight ? '#f5f5fa' : '#050508');
+
+  // Update toggle UI
+  const toggle = document.getElementById('themeToggle');
+  const thumb  = document.getElementById('toggleThumb');
+  const label  = document.getElementById('themeLabel');
+  const desc   = document.getElementById('themeDesc');
+  if (toggle) toggle.checked = isLight;
+  if (thumb)  thumb.textContent = isLight ? '☀️' : '🌙';
+  if (label)  label.textContent = isLight ? '☀️ Tema Terang' : '🌙 Tema Gelap';
+  if (desc)   desc.textContent  = isLight ? 'Saat ini menggunakan tema terang' : 'Saat ini menggunakan tema gelap';
+  // sync header icon
+  const hdrBtn = document.getElementById('themeBtnHdr');
+  if (hdrBtn) hdrBtn.textContent = isLight ? '☀️' : '🌙';
+}
+
+function toggleTheme(isLight) {
+  localStorage.setItem('mp_theme', isLight ? 'light' : 'dark');
+  applyTheme(isLight, true);
+  showToast(isLight ? 'Tema terang aktif ☀️' : 'Tema gelap aktif 🌙', '');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('mp_theme');
+  // If no saved preference, use system preference
+  const preferLight = saved
+    ? saved === 'light'
+    : window.matchMedia('(prefers-color-scheme: light)').matches;
+  applyTheme(preferLight, false);
+}
+
 init();
+initTheme();
 </script>
 </body>
 </html>
