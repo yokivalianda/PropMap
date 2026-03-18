@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MarketPro — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --brand:#6366f1;--brand2:#818cf8;--violet:#a855f7;
+  --emerald:#10b981;--amber:#f59e0b;--rose:#f43f5e;
+  --bg:#050508;--s1:#0c0c12;--s2:#111118;--s3:#18181f;
+  --t1:#f0f0f8;--t2:#9898b8;--t3:#4a4a68;--t4:#2e2e42;
+  --border:rgba(255,255,255,0.08);
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t1);overflow-x:hidden;min-height:100vh}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:60px 24px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 30%,rgba(99,102,241,.18),transparent 55%),
+    radial-gradient(ellipse at 80% 70%,rgba(168,85,247,.12),transparent 50%),
+    radial-gradient(ellipse at 50% 100%,rgba(14,165,233,.08),transparent 50%);
+  pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;
+  mask-image:radial-gradient(ellipse at center,black 20%,transparent 80%);
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);
+  border-radius:999px;padding:6px 16px;font-size:12px;font-weight:700;
+  color:var(--brand2);letter-spacing:.5px;text-transform:uppercase;
+  margin-bottom:28px;position:relative;z-index:1;
+}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+
+.hero-logo{
+  display:inline-flex;align-items:center;gap:16px;
+  margin-bottom:24px;position:relative;z-index:1;
+}
+.hero-mark{
+  width:72px;height:72px;border-radius:22px;
+  background:linear-gradient(135deg,var(--brand),var(--violet));
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  box-shadow:0 16px 48px rgba(99,102,241,.4);
+}
+.hero-wordmark{font-size:52px;font-weight:900;letter-spacing:-3px;line-height:1}
+.hero-wordmark em{font-style:normal;color:var(--brand2)}
+
+.hero-tagline{
+  font-size:clamp(16px,3vw,20px);color:var(--t2);
+  max-width:540px;line-height:1.6;margin-bottom:40px;
+  position:relative;z-index:1;
+}
+
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.btn-hero{
+  padding:14px 28px;border-radius:14px;font-size:15px;font-weight:700;
+  cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+  transition:all .2s;
+}
+.btn-hero-primary{
+  background:linear-gradient(135deg,var(--brand),#4338ca);
+  color:#fff;border:none;
+  box-shadow:0 8px 32px rgba(99,102,241,.4);
+}
+.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(99,102,241,.5)}
+.btn-hero-secondary{
+  background:rgba(255,255,255,.05);border:1.5px solid var(--border);
+  color:var(--t2);
+}
+.btn-hero-secondary:hover{background:rgba(255,255,255,.08);color:var(--t1)}
+
+/* ── PHONE MOCKUP STRIP ── */
+.mockup-strip{
+  padding:80px 24px;
+  background:var(--s1);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.mockup-strip-title{text-align:center;font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1.5px;margin-bottom:12px}
+.mockup-strip-sub{text-align:center;font-size:15px;color:var(--t2);margin-bottom:52px}
+
+.phones-row{
+  display:flex;gap:20px;justify-content:center;align-items:flex-start;
+  flex-wrap:nowrap;overflow-x:auto;padding:0 20px 16px;
+  scrollbar-width:thin;scrollbar-color:var(--s3) transparent;
+}
+.phones-row::-webkit-scrollbar{height:4px}
+.phones-row::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+
+.phone-frame{
+  flex-shrink:0;
+  width:220px;
+  border-radius:36px;
+  background:var(--s2);
+  border:1.5px solid var(--border);
+  overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+  transition:transform .3s;
+  position:relative;
+}
+.phone-frame:hover{transform:translateY(-8px) scale(1.02)}
+.phone-frame svg{width:100%;display:block}
+.phone-label{
+  text-align:center;font-size:12px;font-weight:600;color:var(--t3);
+  margin-top:14px;letter-spacing:.3px;
+}
+
+/* ── FEATURES GRID ── */
+.features{padding:80px 24px;max-width:1080px;margin:0 auto}
+.features-title{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1.5px;text-align:center;margin-bottom:10px}
+.features-sub{font-size:15px;color:var(--t2);text-align:center;margin-bottom:52px}
+
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.feat-card{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:20px;padding:24px;
+  transition:border-color .2s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;
+  background:radial-gradient(ellipse at 0% 0%,rgba(99,102,241,.06),transparent 60%);
+}
+.feat-card:hover{border-color:rgba(99,102,241,.2);transform:translateY(-2px)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{font-size:28px;margin-bottom:14px}
+.feat-title{font-size:16px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.feat-desc{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* ── TECH STACK ── */
+.tech{
+  padding:64px 24px;max-width:800px;margin:0 auto;text-align:center;
+}
+.tech-title{font-size:clamp(20px,3vw,28px);font-weight:800;letter-spacing:-1px;margin-bottom:10px}
+.tech-sub{font-size:14px;color:var(--t2);margin-bottom:36px}
+.tech-pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tech-pill{
+  padding:8px 18px;border-radius:999px;font-size:13px;font-weight:700;
+  border:1.5px solid var(--border);background:var(--s2);color:var(--t2);
+  display:flex;align-items:center;gap:7px;
+}
+.tech-pill.hi{border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:var(--brand2)}
+
+/* ── SETUP STEPS ── */
+.setup{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:72px 24px}
+.setup-inner{max-width:800px;margin:0 auto}
+.setup-title{font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:-1.2px;text-align:center;margin-bottom:10px}
+.setup-sub{font-size:14px;color:var(--t2);text-align:center;margin-bottom:48px}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--brand),var(--violet));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;margin-top:2px;
+}
+.step-body{}
+.step-title{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--t2);line-height:1.6}
+.step-code{
+  display:block;margin-top:8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  color:var(--brand2);overflow-x:auto;
+}
+
+/* ── FOOTER ── */
+footer{
+  padding:48px 24px;text-align:center;
+  border-top:1px solid var(--border);
+}
+.footer-logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px}
+.footer-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--violet));display:flex;align-items:center;justify-content:center;font-size:16px}
+.footer-wordmark{font-size:18px;font-weight:800;letter-spacing:-1px}
+.footer-wordmark em{font-style:normal;color:var(--brand2)}
+.footer-desc{font-size:13px;color:var(--t3);margin-bottom:20px}
+.footer-links{display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+.footer-links a{font-size:13px;color:var(--t3);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--t1)}
+
+@media(max-width:600px){
+  .hero-wordmark{font-size:38px}
+  .hero-mark{width:56px;height:56px;font-size:28px;border-radius:18px}
+  .phones-row{justify-content:flex-start}
+  .phone-frame{width:180px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-badge"><span class="hero-badge-dot"></span>v3.0 · Real-time · PWA</div>
+  <div class="hero-logo">
+    <div class="hero-mark">🎯</div>
+    <div class="hero-wordmark">Market<em>Pro</em></div>
+  </div>
+  <p class="hero-tagline">Aplikasi CRM marketing properti yang bisa diinstall di HP, real-time, dan mendukung seluruh tim.</p>
+  <div class="hero-cta">
+    <a href="./index.html" class="btn-hero btn-hero-primary">🚀 Buka Aplikasi</a>
+    <a href="https://github.com/YOUR_USERNAME/marketpro" class="btn-hero btn-hero-secondary">⭐ GitHub</a>
+  </div>
+</section>
+
+<!-- ── PHONE MOCKUPS ── -->
+<section class="mockup-strip">
+  <div class="mockup-strip-title">Tampilan Aplikasi</div>
+  <div class="mockup-strip-sub">Tersedia dalam tema gelap dan terang</div>
+  <div class="phones-row">
+    <div>
+      <div class="phone-frame">
+        <img src="./screenshots/screen-01-dashboard-dark.svg" width="390" height="844" alt="Dashboard Gelap" style="width:100%;display:block"/>
+      </div>
+      <div class="phone-label">Dashboard · Gelap</div>
+    </div>
+    <div>
+      <div class="phone-frame">
+        <img src="./screenshots/screen-02-konsumen-dark.svg" width="390" height="844" alt="Konsumen Gelap" style="width:100%;display:block"/>
+      </div>
+      <div class="phone-label">Konsumen · Gelap</div>
+    </div>
+    <div>
+      <div class="phone-frame">
+        <img src="./screenshots/screen-03-konsumen-light.svg" width="390" height="844" alt="Konsumen Terang" style="width:100%;display:block"/>
+      </div>
+      <div class="phone-label">Konsumen · Terang</div>
+    </div>
+    <div>
+      <div class="phone-frame">
+        <img src="./screenshots/screen-04-detail-dark.svg" width="390" height="844" alt="Detail Konsumen" style="width:100%;display:block"/>
+      </div>
+      <div class="phone-label">Detail Konsumen</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features">
+  <div class="features-title">Semua yang Dibutuhkan Tim Marketing</div>
+  <div class="features-sub">Satu aplikasi untuk seluruh proses dari booking hingga akad</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Real-time Sync</div>
+      <div class="feat-desc">Data tersinkronisasi ke semua HP tim secara instan. Saat satu marketing update status, semua langsung tahu.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">👥</div>
+      <div class="feat-title">Multi-user & Role</div>
+      <div class="feat-desc">Login per marketing dengan akun masing-masing. Admin bisa lihat dan kelola data seluruh tim.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📲</div>
+      <div class="feat-title">Install di HP</div>
+      <div class="feat-desc">Progressive Web App — install di Android & iPhone seperti aplikasi native tanpa perlu App Store.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📋</div>
+      <div class="feat-title">Pipeline 5 Tahap</div>
+      <div class="feat-desc">Booking → Proses DP → Kumpul Berkas → Selesai → Batal. Visual progress yang mudah dipahami.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📁</div>
+      <div class="feat-title">Checklist Berkas</div>
+      <div class="feat-desc">6 item berkas KPR per konsumen dengan centang satu-per-satu. Progress tampil langsung di kartu.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔔</div>
+      <div class="feat-title">Pengingat Otomatis</div>
+      <div class="feat-desc">Alert untuk follow-up booking yang sudah lama, berkas belum lengkap, dan DP yang belum selesai.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Laporan & Ranking</div>
+      <div class="feat-desc">Total nilai penjualan, DP masuk, progress pipeline, dan ranking performa tim untuk Admin.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🌙</div>
+      <div class="feat-title">Tema Gelap & Terang</div>
+      <div class="feat-desc">Toggle tema kapan saja dari header. Preferensi tersimpan otomatis dan mengikuti setting sistem HP.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📞</div>
+      <div class="feat-title">Aksi Cepat</div>
+      <div class="feat-desc">Tombol Telepon dan WhatsApp langsung dari detail konsumen. Satu tap untuk menghubungi.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TECH STACK ── -->
+<section class="tech">
+  <div class="tech-title">Teknologi</div>
+  <div class="tech-sub">Ringan, modern, dan gratis untuk dihosting</div>
+  <div class="tech-pills">
+    <div class="tech-pill hi">⚡ Supabase</div>
+    <div class="tech-pill hi">🔄 Realtime WebSocket</div>
+    <div class="tech-pill hi">🔐 Supabase Auth</div>
+    <div class="tech-pill">📦 Vanilla JS</div>
+    <div class="tech-pill">🎨 CSS Variables</div>
+    <div class="tech-pill">📱 PWA / Service Worker</div>
+    <div class="tech-pill">🌐 Vercel / Netlify</div>
+    <div class="tech-pill">🔒 Row Level Security</div>
+    <div class="tech-pill">🖋 Outfit + JetBrains Mono</div>
+  </div>
+</section>
+
+<!-- ── SETUP STEPS ── -->
+<section class="setup">
+  <div class="setup-inner">
+    <div class="setup-title">Mulai dalam 4 Langkah</div>
+    <div class="setup-sub">Dari nol sampai bisa dipakai tim dalam kurang dari 30 menit</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Jalankan setup.sql di Supabase</div>
+          <div class="step-desc">Buka Supabase → SQL Editor → paste isi file <code style="background:#111118;padding:2px 6px;border-radius:4px;color:#818cf8">setup.sql</code> → klik Run. Tabel, RLS, dan trigger otomatis terbuat.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Aktifkan Realtime di Supabase</div>
+          <div class="step-desc">Table Editor → tabel <code style="background:#111118;padding:2px 6px;border-radius:4px;color:#818cf8">konsumen</code> → ikon ⚡ Realtime → Enable.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Isi konfigurasi di index.html</div>
+          <div class="step-desc">Cari 2 baris ini dan ganti dengan URL & Key dari Supabase → Project Settings → API:</div>
+          <code class="step-code">const SUPABASE_URL = 'https://xxxx.supabase.co';<br>const SUPABASE_ANON_KEY = 'eyJ...';</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Upload ke Vercel atau Netlify</div>
+          <div class="step-desc">Drag & drop folder ke <a href="https://vercel.com" style="color:#818cf8">vercel.com</a> atau <a href="https://netlify.com" style="color:#818cf8">netlify.com</a> → dapat URL untuk dibagikan ke tim. Gratis.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">
+    <div class="footer-mark">🎯</div>
+    <div class="footer-wordmark">Market<em>Pro</em></div>
+  </div>
+  <div class="footer-desc">CRM Marketing Properti · Real-time · Multi-user · PWA</div>
+  <div class="footer-links">
+    <a href="./index.html">Buka Aplikasi</a>
+    <a href="https://github.com/YOUR_USERNAME/marketpro">GitHub</a>
+    <a href="https://supabase.com">Supabase</a>
+    <a href="https://vercel.com">Vercel</a>
+  </div>
+  <div style="margin-top:24px;font-size:11px;color:#2e2e42">MIT License · Dibuat untuk tim marketing properti Indonesia</div>
+</footer>
+
+</body>
+</html>

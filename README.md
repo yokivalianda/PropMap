@@ -1,136 +1,116 @@
 # 🎯 MarketPro — CRM Tim Marketing Properti
 
-> Aplikasi web real-time untuk monitoring dan pengelolaan data konsumen properti, dirancang khusus untuk tim marketing. Dapat diinstall di HP (PWA) dan mendukung multi-user dengan sinkronisasi data secara langsung.
+<div align="center">
 
-![MarketPro](https://img.shields.io/badge/MarketPro-v2.0-3b82f6?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRleHQgeT0iMjAiIGZvbnQtc2l6ZT0iMjAiPvCfjq88L3RleHQ+PC9zdmc+)
-![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=for-the-badge&logo=supabase)
-![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![version](https://img.shields.io/badge/versi-3.0-6366f1?style=for-the-badge)
+![Supabase](https://img.shields.io/badge/Supabase-Realtime-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8?style=for-the-badge)
+![License](https://img.shields.io/badge/Lisensi-MIT-10b981?style=for-the-badge)
+
+**Aplikasi web real-time untuk monitoring dan pengelolaan data konsumen properti.**
+Dapat diinstall di HP (PWA), mendukung multi-user, dan sinkronisasi data secara langsung ke seluruh tim.
+
+[🚀 **Buka Demo**](https://YOUR_USERNAME.github.io/marketpro/demo.html) · [📱 **Buka Aplikasi**](https://YOUR_USERNAME.github.io/marketpro/) · [⭐ **Beri Bintang**](#)
+
+</div>
 
 ---
 
-## 📋 Daftar Isi
+## 📸 Screenshot
 
-- [Fitur Utama](#-fitur-utama)
-- [Demo & Screenshot](#-demo--screenshot)
-- [Teknologi](#-teknologi)
-- [Cara Setup](#-cara-setup)
-- [Struktur File](#-struktur-file)
-- [Panduan Penggunaan](#-panduan-penggunaan)
-- [FAQ](#-faq)
-- [Kontribusi](#-kontribusi)
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/screen-01-dashboard-dark.svg" width="200" alt="Dashboard Gelap"/>
+      <br/><sub><b>Dashboard · Tema Gelap</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/screen-02-konsumen-dark.svg" width="200" alt="Konsumen Gelap"/>
+      <br/><sub><b>Daftar Konsumen</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/screen-03-konsumen-light.svg" width="200" alt="Konsumen Terang"/>
+      <br/><sub><b>Tema Terang ☀️</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/screen-04-detail-dark.svg" width="200" alt="Detail Konsumen"/>
+      <br/><sub><b>Detail & Checklist</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
 
 ---
 
 ## ✨ Fitur Utama
 
-### 🔐 Autentikasi Multi-user
-- Login dan registrasi dengan email & password
-- Dua level akses: **Marketing** dan **Admin**
-- Sesi login persisten (tidak perlu login ulang)
-- Keamanan data di level database (Row Level Security)
+| Fitur | Keterangan |
+|-------|-----------|
+| ⚡ **Real-time Sync** | Data tersinkronisasi ke semua HP tim secara instan via WebSocket |
+| 👥 **Multi-user** | Login per marketing, data terisolasi dengan Row Level Security |
+| 🔐 **Admin & Marketing** | Dua level akses — Admin lihat semua, Marketing lihat data sendiri |
+| 📲 **PWA** | Install di Android/iPhone seperti aplikasi native tanpa App Store |
+| 🌙 **Tema Gelap & Terang** | Toggle dari header, tersimpan otomatis, mengikuti preferensi sistem |
+| 📁 **Checklist Berkas KPR** | 6 item berkas per konsumen dengan progress indicator |
+| 🔔 **Pengingat Otomatis** | Alert follow-up, berkas kurang, DP belum selesai |
+| 📊 **Ranking Tim** | Laporan performa dan ranking marketing untuk Admin |
+| 📞 **Aksi Cepat** | Telepon dan WhatsApp langsung dari detail konsumen |
+| 📌 **Log Aktivitas** | Setiap perubahan tercatat otomatis dengan timestamp |
 
-### 📊 Dashboard Real-time
-- Statistik langsung: total konsumen, booking, proses DP, akad selesai
-- Pipeline visual 5 tahap yang interaktif
-- Feed aktivitas terbaru
-- **Khusus Admin:** kartu performa per anggota tim
+---
 
-### 👥 Manajemen Konsumen Lengkap
-- CRUD data konsumen (tambah, lihat, edit, hapus)
-- Data yang dikelola: nama, HP, tipe unit, kavling, harga, DP, tanggal booking, tipe KPR, sumber leads, catatan
-- Pencarian real-time berdasarkan nama / HP / unit / kavling
-- Filter berdasarkan 5 status pipeline
-- **Khusus Admin:** filter data per marketing
+## 📋 Pipeline Konsumen
 
-### 📋 Pipeline 5 Tahap
-
-| Status | Keterangan |
-|--------|-----------|
-| 📋 Booking | Konsumen sudah booking unit |
-| 💰 Proses DP | Pembayaran uang muka sedang berjalan |
-| 📁 Kumpul Berkas | Pengumpulan dokumen untuk KPR |
-| ✅ Selesai | Akad kredit sudah dilaksanakan |
-| ❌ Batal | Konsumen membatalkan pembelian |
-
-### 📁 Checklist Berkas Otomatis
-- 6 item berkas yang bisa dicentang per konsumen
-- KTP / e-KTP, Kartu Keluarga, Slip Gaji / SK Kerja, Rekening Tabungan 3 Bulan, NPWP, Surat Keterangan Lainnya
-- Progress berkas tampil langsung di kartu konsumen
-
-### 📌 Log Aktivitas Otomatis
-- Setiap perubahan status tercatat otomatis dengan timestamp
-- Setiap perubahan checklist berkas tercatat
-- Bisa tambah catatan manual kapan saja
-
-### 🔔 Notifikasi & Pengingat
-- Pengingat follow-up booking yang sudah lebih dari 7 hari
-- Alert konsumen dengan berkas belum lengkap
-- Pengingat proses DP yang belum selesai
-- Badge angka di ikon notifikasi
-
-### 📈 Laporan & Analitik
-- Total nilai penjualan dan DP masuk
-- Progress bar per tahap pipeline
-- Tracking target penjualan bulanan
-- **Khusus Admin:** ranking performa seluruh tim marketing
-
-### ⚙️ Panel Admin
-- Kelola role anggota tim (Marketing ↔ Admin) dari dalam aplikasi
-- Export semua data konsumen tim ke JSON
-- Lihat dan filter data konsumen seluruh tim
-
-### 📲 Progressive Web App (PWA)
-- Install di HP Android dan iPhone seperti aplikasi native
-- Tampilan tetap muncul saat koneksi lambat (offline-ready)
-- Sinkronisasi data otomatis saat koneksi kembali
+```
+📋 Booking  →  💰 Proses DP  →  📁 Kumpul Berkas  →  ✅ Selesai
+                                                        ❌ Batal
+```
 
 ---
 
 ## 🛠 Teknologi
 
-| Komponen | Teknologi |
-|----------|-----------|
-| Frontend | HTML5, CSS3, Vanilla JavaScript |
-| Database | [Supabase](https://supabase.com) (PostgreSQL) |
-| Auth | Supabase Auth (email/password) |
-| Real-time | Supabase Realtime (WebSocket) |
-| Hosting | [Vercel](https://vercel.com) / [Netlify](https://netlify.com) (gratis) |
-| PWA | Service Worker + Web App Manifest |
-| Font | Syne + DM Sans + JetBrains Mono |
+```
+Frontend      : HTML5 + CSS3 + Vanilla JavaScript (zero dependencies)
+Database      : Supabase (PostgreSQL)
+Auth          : Supabase Auth (email/password)
+Real-time     : Supabase Realtime (WebSocket / postgres_changes)
+Keamanan      : Row Level Security — data terisolasi per user di level DB
+PWA           : Service Worker + Web App Manifest
+Hosting       : Vercel / Netlify (gratis)
+Font          : Outfit + JetBrains Mono (Google Fonts)
+```
 
 ---
 
 ## 🚀 Cara Setup
 
 ### Prasyarat
-- Akun [Supabase](https://supabase.com) (gratis)
-- Akun [Vercel](https://vercel.com) atau [Netlify](https://netlify.com) untuk hosting (gratis)
+- Akun [Supabase](https://supabase.com) — gratis
+- Akun [Vercel](https://vercel.com) atau [Netlify](https://netlify.com) — gratis
 
-### Langkah 1 — Clone Repository
+### Langkah 1 — Clone & buka folder
 
 ```bash
-git clone https://github.com/username/marketpro.git
+git clone https://github.com/YOUR_USERNAME/marketpro.git
 cd marketpro
 ```
 
-### Langkah 2 — Setup Database Supabase
+### Langkah 2 — Jalankan SQL di Supabase
 
-1. Buka [supabase.com](https://supabase.com) → buat project baru
-2. Pergi ke **SQL Editor**
-3. Jalankan seluruh isi file [`setup.sql`](./setup.sql)
+Buka **Supabase → SQL Editor** → paste seluruh isi [`setup.sql`](./setup.sql) → klik **Run**.
 
 Script akan membuat:
-- Tabel `profiles` — data pengguna & role
-- Tabel `konsumen` — data konsumen properti
-- Row Level Security policies
+- Tabel `profiles` (data pengguna & role)
+- Tabel `konsumen` (data konsumen properti)
+- Row Level Security policies lengkap
 - Auto-update timestamp trigger
 
 ### Langkah 3 — Aktifkan Realtime
 
-Di Supabase Dashboard:
 ```
-Table Editor → konsumen → ⚡ Realtime → Enable
+Supabase Dashboard → Table Editor → konsumen → ⚡ Realtime → Enable
 ```
 
 Atau via SQL:
@@ -138,43 +118,41 @@ Atau via SQL:
 ALTER PUBLICATION supabase_realtime ADD TABLE konsumen;
 ```
 
-### Langkah 4 — Konfigurasi Aplikasi
+### Langkah 4 — Konfigurasi `index.html`
 
-Buka file `index.html`, temukan bagian berikut dan ganti dengan kredensial dari **Supabase → Project Settings → API**:
+Temukan 2 baris ini dan isi dengan kredensial dari **Supabase → Project Settings → API**:
 
 ```javascript
-// ⚙️ KONFIGURASI SUPABASE — GANTI DI SINI
-const SUPABASE_URL = 'https://xxxxxxxxxxxx.supabase.co';
+const SUPABASE_URL      = 'https://xxxxxxxxxxxx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 ```
 
-### Langkah 5 — Upload ke Hosting
+### Langkah 5 — Deploy ke Hosting
 
-**Opsi A — Vercel (Rekomendasi):**
+**Vercel** (direkomendasikan):
 ```bash
-npm install -g vercel
-vercel deploy
+npx vercel deploy
 ```
 Atau drag & drop folder ke [vercel.com/new](https://vercel.com/new)
 
-**Opsi B — Netlify:**
+**Netlify:**
 Drag & drop folder ke [app.netlify.com/drop](https://app.netlify.com/drop)
 
-Anda akan mendapatkan URL seperti: `https://marketpro-tim.vercel.app`
+Anda akan mendapat URL seperti: `https://marketpro-tim.vercel.app`
 
-### Langkah 6 — Setup Akun Admin Pertama
+### Langkah 6 — Buat Akun Admin Pertama
 
 1. Buka aplikasi → daftar akun baru
-2. Buka Supabase → **Table Editor** → tabel `profiles`
-3. Cari baris dengan email Anda → ubah kolom `role` dari `marketing` menjadi `admin`
-4. Refresh aplikasi → Anda sekarang Admin ✅
+2. Buka **Supabase → Table Editor → `profiles`**
+3. Cari baris email Anda → ubah kolom `role` dari `marketing` → `admin`
+4. Refresh aplikasi ✅
 
-Selanjutnya, penambahan admin berikutnya bisa dilakukan langsung dari dalam aplikasi (**Pengaturan → Panel Admin → Kelola Pengguna**).
+> Setelah jadi Admin, penambahan admin berikutnya bisa dilakukan dari **Pengaturan → Panel Admin → Kelola Pengguna** — tidak perlu ke Supabase lagi.
 
-> **Alternatif via SQL:**
-> ```sql
-> UPDATE profiles SET role = 'admin' WHERE email = 'email_anda@contoh.com';
-> ```
+**Atau via SQL:**
+```sql
+UPDATE profiles SET role = 'admin' WHERE email = 'email_anda@contoh.com';
+```
 
 ---
 
@@ -182,11 +160,17 @@ Selanjutnya, penambahan admin berikutnya bisa dilakukan langsung dari dalam apli
 
 ```
 marketpro/
-├── index.html      # Aplikasi utama (satu file lengkap)
-├── manifest.json   # Konfigurasi PWA
-├── sw.js           # Service Worker (offline support)
-├── setup.sql       # Script SQL untuk setup Supabase
-└── README.md       # Dokumentasi ini
+├── index.html          # Aplikasi utama (satu file lengkap, ~2400 baris)
+├── demo.html           # Halaman demo & landing page
+├── manifest.json       # Konfigurasi PWA
+├── sw.js               # Service Worker (offline support)
+├── setup.sql           # SQL setup lengkap untuk Supabase
+├── screenshots/
+│   ├── screen-01-dashboard-dark.svg
+│   ├── screen-02-konsumen-dark.svg
+│   ├── screen-03-konsumen-light.svg
+│   └── screen-04-detail-dark.svg
+└── README.md
 ```
 
 ---
@@ -197,94 +181,88 @@ marketpro/
 
 | Aksi | Cara |
 |------|------|
-| Tambah konsumen | Tab Konsumen → tombol **＋** (biru, kanan bawah) |
-| Edit konsumen | Buka detail konsumen → tombol **✏️ Edit Data** |
-| Centang berkas | Buka detail konsumen → bagian **Checklist Berkas** |
-| Tambah catatan | Buka detail konsumen → tombol **📝 Tambah Log** |
-| Hubungi konsumen | Buka detail konsumen → tombol **📞 Telepon** atau **💬 WhatsApp** |
-| Lihat pengingat | Tap ikon **🔔** di header |
+| Tambah konsumen | Tab Konsumen → tombol **＋** kanan bawah |
+| Edit konsumen | Detail konsumen → **✏️ Edit** |
+| Centang berkas | Detail → bagian **Checklist Berkas** |
+| Tambah catatan | Detail → **📝 Catat** |
+| Telepon / WA | Detail → tombol **📞** / **💬** |
+| Lihat pengingat | Tap **🔔** di header |
+| Ganti tema | Tap **🌙/☀️** di header atau Pengaturan → Tampilan |
 
 ### Untuk Admin
 
 | Aksi | Cara |
 |------|------|
-| Lihat semua data | Tab Konsumen → data seluruh tim tampil otomatis |
-| Filter per marketing | Tab Konsumen → dropdown **Filter Marketing** |
-| Lihat ranking tim | Tab Laporan → bagian **Ranking Tim Marketing** |
-| Ubah role anggota | Pengaturan → **Panel Admin** → **Kelola Pengguna** |
-| Export data | Pengaturan → **Panel Admin** → **Export Semua Data** |
+| Lihat semua data | Tab Konsumen — otomatis tampil semua tim |
+| Filter per marketing | Konsumen → dropdown **Filter tim** |
+| Lihat ranking | Laporan → **🏆 Ranking Tim** |
+| Ubah role | Pengaturan → **Kelola Pengguna** |
+| Export data | Pengaturan → **Export Data Tim** |
 
 ### Install di HP
 
-**Android (Chrome):**
-1. Buka URL aplikasi di Chrome
-2. Tap menu ⋮ → **Tambahkan ke layar utama**
-3. Tap **Tambahkan**
+**Android (Chrome):** Menu ⋮ → *Tambahkan ke layar utama*
 
-**iPhone (Safari):**
-1. Buka URL aplikasi di Safari
-2. Tap ikon **Berbagi** (kotak dengan panah ke atas)
-3. Pilih **Tambahkan ke Layar Utama**
-4. Tap **Tambahkan**
+**iPhone (Safari):** Tombol Berbagi ↑ → *Tambahkan ke Layar Utama*
 
 ---
 
 ## ❓ FAQ
 
-**Q: Apakah data aman jika satu marketing login di HP yang berbeda?**
-A: Ya. Setiap marketing hanya bisa melihat dan mengedit data konsumen miliknya sendiri, dijamin oleh Row Level Security di level database PostgreSQL.
+**Q: Apakah data seorang marketing bisa dilihat marketing lain?**
+A: Tidak. Row Level Security di PostgreSQL memastikan setiap marketing hanya bisa mengakses data konsumennya sendiri di level database — bukan hanya di level UI.
 
-**Q: Berapa banyak pengguna yang bisa pakai aplikasi ini?**
-A: Supabase free tier mendukung hingga 50.000 baris data dan 500MB storage. Untuk tim 6–20 orang ini lebih dari cukup. Jika sudah besar, upgrade ke Supabase Pro ($25/bulan).
+**Q: Berapa banyak pengguna yang didukung?**
+A: Supabase free tier mendukung hingga 50.000 baris dan 500MB storage. Untuk 6–20 orang dengan ratusan konsumen, ini lebih dari cukup. Upgrade ke Pro ($25/bulan) jika sudah besar.
 
-**Q: Apakah bisa dipakai tanpa internet?**
-A: Tampilan aplikasi akan tetap muncul (cached oleh Service Worker), namun data tidak bisa dimuat atau disimpan tanpa koneksi internet karena database ada di Supabase cloud.
+**Q: Bisa dipakai offline?**
+A: Tampilan aplikasi tetap muncul (Service Worker cache), namun data butuh koneksi internet karena database ada di Supabase cloud.
 
-**Q: Bagaimana jika dua marketing mengedit data yang sama bersamaan?**
-A: Data terakhir yang disimpan akan menang (last-write-wins). Semua perubahan tersinkronisasi real-time ke semua perangkat yang sedang membuka aplikasi.
+**Q: Jika dua marketing edit data yang sama bersamaan?**
+A: Data terakhir yang tersimpan yang menang (last-write-wins). Perubahan tersinkronisasi real-time ke semua perangkat.
 
-**Q: Bisakah aplikasi ini dipakai di laptop/komputer?**
-A: Ya, tampilan responsif dan berfungsi penuh di browser desktop maupun mobile.
-
-**Q: Bagaimana cara reset password?**
-A: Saat ini reset password dilakukan melalui Supabase Dashboard → Authentication → Users → pilih user → Send Password Recovery. Fitur reset password mandiri bisa ditambahkan sebagai pengembangan berikutnya.
+**Q: Bisa dipakai di laptop/browser desktop?**
+A: Ya, tampilan responsif dan berfungsi penuh di browser desktop.
 
 ---
 
-## 🗺 Roadmap Pengembangan
+## 🗺 Roadmap
 
-- [ ] Fitur reset password mandiri dari dalam aplikasi
-- [ ] Notifikasi push ke HP (Web Push Notification)
+- [ ] Reset password mandiri dari dalam aplikasi
+- [ ] Web Push Notification ke HP
 - [ ] Export laporan ke PDF / Excel
-- [ ] Upload foto dokumen / berkas
+- [ ] Upload foto dokumen / berkas konsumen
 - [ ] Kalender jadwal follow-up
+- [ ] Filter laporan berdasarkan rentang tanggal
+- [ ] Multi-proyek (satu marketing handle beberapa proyek)
 - [ ] Integrasi WhatsApp Business API
-- [ ] Dark/Light mode toggle
-- [ ] Multi-proyek (untuk marketing yang handle beberapa proyek)
 
 ---
 
 ## 🤝 Kontribusi
 
-Kontribusi sangat disambut! Silakan:
+Kontribusi sangat disambut!
 
-1. Fork repository ini
-2. Buat branch baru: `git checkout -b fitur/nama-fitur`
-3. Commit perubahan: `git commit -m 'Tambah fitur: nama-fitur'`
-4. Push ke branch: `git push origin fitur/nama-fitur`
-5. Buat Pull Request
+```bash
+# Fork repository, lalu:
+git checkout -b fitur/nama-fitur
+git commit -m 'feat: tambah fitur nama-fitur'
+git push origin fitur/nama-fitur
+# Buat Pull Request
+```
 
 ---
 
 ## 📄 Lisensi
 
-Didistribusikan di bawah [MIT License](LICENSE). Bebas digunakan, dimodifikasi, dan didistribusikan untuk keperluan pribadi maupun komersial.
+[MIT License](LICENSE) — bebas digunakan, dimodifikasi, dan didistribusikan.
 
 ---
 
 <div align="center">
-  <p>Dibuat dengan ❤️ untuk tim marketing properti Indonesia</p>
-  <p>
-    <strong>MarketPro v2.0</strong> · Supabase + PWA · Real-time Multi-user
-  </p>
+  <strong>MarketPro v3.0</strong><br/>
+  Dibuat dengan ❤️ untuk tim marketing properti Indonesia<br/><br/>
+  <a href="https://YOUR_USERNAME.github.io/marketpro/demo.html">Demo</a> ·
+  <a href="https://supabase.com">Supabase</a> ·
+  <a href="https://vercel.com">Vercel</a>
 </div>
