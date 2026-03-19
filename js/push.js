@@ -128,7 +128,7 @@ function checkAndSendPushReminders() {
     }
 
     // ── Booking terlalu lama (tiap 7 hari)
-    if (k.status === 'booking' && k.tgl_booking) {
+    if ((k.status === 'booking' || k.status === 'cek-lokasi') && k.tgl_booking) {
       const d = Math.floor((today - new Date(k.tgl_booking)) / 86400000);
       if (d > 0 && d % 7 === 0) {
         const key = `notif-booking-${k.id}-${d}`;

@@ -14,13 +14,16 @@ function switchPage(p) {
 // ── DASHBOARD ─────────────────────────────────────
 function renderDash() {
   const k = allKons;
-  document.getElementById('stTotal').textContent   = k.length;
-  document.getElementById('stSelesai').textContent = k.filter(x => x.status === 'selesai').length;
-  document.getElementById('stDP').textContent      = k.filter(x => x.status === 'dp').length;
-  document.getElementById('stBooking').textContent = k.filter(x => x.status === 'booking').length;
+  document.getElementById('stTotal').textContent      = k.length;
+  document.getElementById('stSelesai').textContent    = k.filter(x => x.status === 'selesai').length;
+  document.getElementById('stDP').textContent         = k.filter(x => x.status === 'dp').length;
+  document.getElementById('stBooking').textContent    = k.filter(x => x.status === 'booking').length;
+  const elCL = document.getElementById('stCekLokasi');
+  if (elCL) elCL.textContent = k.filter(x => x.status === 'cek-lokasi').length;
   document.getElementById('stTotalSub').textContent = myProf?.role === 'admin' ? 'Semua tim' : 'Konsumen saya';
 
   const pipes = [
+    { k: 'cek-lokasi', l: 'Cek Lokasi', c: 'cek-lokasi' },
     { k: 'booking', l: 'Booking', c: 'booking' },
     { k: 'dp', l: 'Proses DP', c: 'dp' },
     { k: 'berkas', l: 'Berkas', c: 'berkas' },

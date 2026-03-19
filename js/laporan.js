@@ -124,11 +124,12 @@ function renderLapKpi() {
 
   // Pipeline progress bars
   const pipes = [
-    { k: 'booking', l: 'Booking',       c: '#6366f1' },
-    { k: 'dp',      l: 'Proses DP',     c: '#f59e0b' },
-    { k: 'berkas',  l: 'Kumpul Berkas', c: '#a855f7' },
-    { k: 'selesai', l: 'Selesai',       c: '#10b981' },
-    { k: 'batal',   l: 'Batal',         c: '#f43f5e' },
+    { k: 'cek-lokasi', l: 'Cek Lokasi',    c: '#0ea5e9' },
+    { k: 'booking',    l: 'Booking',        c: '#6366f1' },
+    { k: 'dp',         l: 'Proses DP',      c: '#f59e0b' },
+    { k: 'berkas',     l: 'Kumpul Berkas',  c: '#a855f7' },
+    { k: 'selesai',    l: 'Selesai',        c: '#10b981' },
+    { k: 'batal',      l: 'Batal',          c: '#f43f5e' },
   ];
   document.getElementById('lapProg').innerHTML = pipes.map(p => {
     const cnt = k.filter(x => x.status === p.k).length;
@@ -189,12 +190,12 @@ function renderCharts() {
   // ── Chart 1: Pipeline donut ────────────────────
   const c1 = document.getElementById('chartPipeline');
   if (c1) {
-    const counts = ['booking','dp','berkas','selesai','batal'].map(s => k.filter(x => x.status === s).length);
+    const counts = ['cek-lokasi','booking','dp','berkas','selesai','batal'].map(s => k.filter(x => x.status === s).length);
     chartPipeline = new Chart(c1, {
       type: 'doughnut',
       data: {
-        labels: ['Booking','Proses DP','Kumpul Berkas','Selesai','Batal'],
-        datasets: [{ data: counts, backgroundColor: [cl.brand, cl.amber, cl.violet, cl.emerald, cl.rose], borderWidth: 0, hoverOffset: 6 }]
+        labels: ['Cek Lokasi','Booking','Proses DP','Kumpul Berkas','Selesai','Batal'],
+        datasets: [{ data: counts, backgroundColor: [cl.sky, cl.brand, cl.amber, cl.violet, cl.emerald, cl.rose], borderWidth: 0, hoverOffset: 6 }]
       },
       options: {
         cutout: '65%',
