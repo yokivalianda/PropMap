@@ -208,3 +208,38 @@ CREATE POLICY "Admin baca semua subscription"
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- ════════════════════════════════════════════════
+-- TARGET PENJUALAN BULANAN — v4.2
+-- Jalankan di Supabase SQL Editor
+-- ════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS target_bulanan (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     uuid REFERENCES auth.users ON DELETE CASCADE,
+  tahun       int  NOT NULL,
+  bulan       int  NOT NULL,   -- 1-12
+  target      int  NOT NULL DEFAULT 5,
+  catatan     text DEFAULT '',
+  created_at  timestamptz DEFAULT now(),
+  updated_at  timestamptz DEFAULT now(),
+  UNIQUE (user_id, tahun, bulan)
+);
+
+ALTER TABLE target_bulanan ENABLE ROW LEVEL SECURITY;
+
+-- Marketing bisa lihat & ubah target milik sendiri
+CREATE POLICY "User kelola target sendiri"
+  ON target_bulanan FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- Admin bisa lihat & ubah semua target
+CREATE POLICY "Admin kelola semua target"
+  ON target_bulanan FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );

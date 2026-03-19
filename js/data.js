@@ -51,6 +51,8 @@ async function afterLogin(user) {
   shell.style.display = 'flex'; shell.classList.add('show');
   updateHeaderUI();
   setupAdminUI();
+  await loadTarget();
+  if (typeof setupTargetAdminLink === "function") setupTargetAdminLink();
   renderDash(); renderKons();
   // Init push notification setelah login
   setTimeout(() => { if(typeof initPush === 'function') initPush(); }, 1000);

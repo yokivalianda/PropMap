@@ -157,18 +157,8 @@ function renderLapKpi() {
       </div>`).join('');
   }
 
-  // Target
-  const target = myProf?.target || 5;
-  const pct    = Math.min(Math.round(selesai / target * 100), 100);
-  document.getElementById('lapTarget').innerHTML = `
-    <div class="target-card">
-      <div class="target-head">
-        <div><div class="target-label">Akad Selesai</div><div style="font-size:11px;color:var(--text-3);margin-top:2px">Target periode ini</div></div>
-        <div class="target-num">${selesai}<span style="font-size:14px;color:var(--text-3);font-family:var(--font-body);font-weight:500"> / ${target}</span></div>
-      </div>
-      <div class="target-track"><div class="target-fill" style="width:${pct}%"></div></div>
-      <div class="target-pct">${pct}% tercapai</div>
-    </div>`;
+  // Target — render via target.js module
+  if (typeof renderTargetSection === 'function') renderTargetSection();
 }
 
 // ── CHARTS via Chart.js ───────────────────────────

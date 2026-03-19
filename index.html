@@ -426,9 +426,14 @@
       </div>
 
       <!-- Target -->
-      <div class="section" style="margin-top:8px">
+      <div class="section" style="margin-top:8px;margin-bottom:16px">
         <div class="section-head">
-          <div class="section-title"><span class="sticon">📅</span>Target Periode Ini</div>
+          <div class="section-title"><span class="sticon">🎯</span>Target Penjualan</div>
+          <div id="targetAdminLink" style="display:none">
+            <button onclick="openSetTargetBulk()" style="font-size:11px;font-weight:700;color:var(--brand-light);background:var(--brand-soft);border:1px solid rgba(99,102,241,.25);border-radius:var(--r-full);padding:4px 12px;cursor:pointer;font-family:var(--font-body)">
+              ⚙ Atur Semua
+            </button>
+          </div>
         </div>
         <div id="lapTarget"></div>
       </div>
@@ -650,6 +655,22 @@
 </div>
 
 <!-- ══ MODAL: TAMBAH/EDIT ══ -->
+<!-- ════ MODAL TARGET ════ -->
+<div class="modal-bg" id="modalTarget">
+  <div class="modal-sheet">
+    <div class="sheet-pill"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">🎯 Set Target Bulanan</div>
+      <button class="sheet-close" onclick="closeModal('modalTarget')">✕</button>
+    </div>
+    <div class="sheet-body" id="modalTargetBody" style="padding:0 18px 8px"></div>
+    <div style="padding:0 18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn-secondary" onclick="closeModal('modalTarget')">Batal</button>
+      <button class="btn-primary" id="btnSaveTarget" onclick="saveTargetModal()">Simpan Target</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modalAdd">
   <div class="modal-sheet">
     <div class="sheet-pill"></div>
@@ -886,6 +907,7 @@
 <script src="js/laporan.js"></script>
 <script src="js/kalender.js"></script>
 <script src="js/dokumen.js"></script>
+<script src="js/target.js"></script>
 <script src="js/push.js"></script>
 
 <script>
