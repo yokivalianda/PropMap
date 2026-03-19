@@ -152,7 +152,6 @@
       </button>
     </div>
   </header>
-  </div>
 
   <div class="scroll-area" id="scrollArea">
 
@@ -826,6 +825,18 @@ document.addEventListener('keydown', e => {
 initTheme();
 init();
 
+// Handle notifikasi deep link dari klik notifikasi push
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const openId = params.get('open');
+  if (openId) {
+    const tryOpen = setInterval(() => {
+      const k = allKons?.find(x => x.id === openId);
+      if (k) { clearInterval(tryOpen); openDetail(openId); }
+    }, 500);
+    setTimeout(() => clearInterval(tryOpen), 8000);
+  }
+});
 </script>
 </body>
 </html>
