@@ -36,34 +36,43 @@ async function loadProyek() {
 
 // ── RENDER SWITCHER (header dropdown) ────────────
 function renderProyekSwitcher() {
-  const sw = document.getElementById('proyekSwitcher');
+  const sw  = document.getElementById('proyekSwitcher');
+  const bar = document.getElementById('proyekBar');
   if (!sw) return;
 
   const isAdmin = myProf?.role === 'admin';
-  const label   = curProyek ? curProyek.nama : 'Semua Proyek';
-  const warna   = curProyek ? curProyek.warna : '#6366f1';
 
-  // Jika tidak ada proyek dan bukan admin — sembunyikan switcher
+  // Sembunyikan bar jika marketing tanpa proyek
   if (allProyek.length === 0 && !isAdmin) {
+    if (bar) bar.style.display = 'none';
     sw.innerHTML = ''; return;
   }
 
-  // Admin tanpa proyek: tampilkan tombol buat proyek pertama
+  // Tampilkan bar
+  if (bar) bar.style.display = 'block';
+
+  const label = curProyek ? curProyek.nama : 'Semua Proyek';
+  const warna = curProyek ? curProyek.warna : '#6366f1';
+
+  // Admin tanpa proyek: tombol buat proyek pertama
   if (allProyek.length === 0 && isAdmin) {
     sw.innerHTML = `
       <button class="proyek-switch-btn proyek-switch-empty" onclick="openModalProyek()">
-        <span style="font-size:13px">＋</span>
-        <span class="proyek-switch-label">Buat Proyek</span>
+        <span style="font-size:14px">＋</span>
+        <span class="proyek-switch-label">Buat Proyek Pertama</span>
       </button>`;
     return;
   }
 
+  // Normal: switcher dengan dropdown
   sw.innerHTML = `
     <button class="proyek-switch-btn" onclick="toggleProyekDropdown(event)">
       <span class="proyek-dot" style="background:${warna}"></span>
       <span class="proyek-switch-label">${label}</span>
-      <span class="proyek-switch-caret">▾</span>
-    </button>`;
+      <span style="font-size:11px;color:var(--text-4);margin-left:2px">${allProyek.length > 1 ? '▾' : ''}</span>
+    </button>
+    ${isAdmin ? `<button class="proyek-add-btn" onclick="openModalProyek()" title="Tambah proyek baru">＋</button>` : ''}
+  `;
 }
 
 function toggleProyekDropdown(e) {
