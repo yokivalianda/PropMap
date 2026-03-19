@@ -171,8 +171,17 @@ async function hapusKons() {
   if (!confirm('Yakin hapus konsumen ini?')) return;
   const id = document.getElementById('editId').value;
   const { error } = await sb.from('konsumen').delete().eq('id', id);
-  if (!error) { showToast('Konsumen dihapus', '🗑️'); closeModal('modalAdd'); }
-  else showToast('Gagal menghapus', '❌');
+  if (!error) {
+    allKons = allKons.filter(k => k.id !== id);
+    closeModal('modalAdd');
+    closeModal('modalDetail');
+    renderKons();
+    renderDash();
+    updateNotifPip();
+    showToast('Konsumen dihapus', '🗑️');
+  } else {
+    showToast('Gagal menghapus', '❌');
+  }
 }
 
 async function toggleBerkas(id, key) {
