@@ -52,6 +52,9 @@ async function afterLogin(user) {
   updateHeaderUI();
   setupAdminUI();
   renderDash(); renderKons();
+  // Init push notification setelah login
+  setTimeout(() => { if(typeof initPush === 'function') initPush(); }, 1000);
+  setTimeout(() => { if(typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders(); }, 2000);
   initTheme();
 }
 
@@ -131,6 +134,7 @@ function setupRealtime() {
       }
       updateNotifPip();
       if (curPage === 'dashboard') renderDash();
+      if (typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders();
       if (curPage === 'konsumen')  renderKons();
       if (curPage === 'laporan')   { renderLapKpi(); renderCharts(); }
       if (curPage === 'kalender')  renderKalender();
