@@ -1378,5 +1378,14 @@ html.light input[type="date"] {
 .member-check-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--brand); flex-shrink: 0; }
 .member-av { width: 32px; height: 32px; border-radius: 9px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-/* ── Responsive: sembunyikan switcher jika tidak ada proyek ── */
-.proyek-switcher:empty { display: none; }
+/* ── Tombol buat proyek pertama ── */
+.proyek-switch-empty {
+  border-style: dashed;
+  color: var(--text-3);
+  gap: 5px;
+}
+.proyek-switch-empty:hover {
+  border-color: rgba(99,102,241,.5);
+  color: var(--brand-light);
+  background: var(--brand-soft);
+}

@@ -39,8 +39,24 @@ function renderProyekSwitcher() {
   const sw = document.getElementById('proyekSwitcher');
   if (!sw) return;
 
-  const label = curProyek ? curProyek.nama : 'Semua Proyek';
-  const warna = curProyek ? curProyek.warna : '#6366f1';
+  const isAdmin = myProf?.role === 'admin';
+  const label   = curProyek ? curProyek.nama : 'Semua Proyek';
+  const warna   = curProyek ? curProyek.warna : '#6366f1';
+
+  // Jika tidak ada proyek dan bukan admin — sembunyikan switcher
+  if (allProyek.length === 0 && !isAdmin) {
+    sw.innerHTML = ''; return;
+  }
+
+  // Admin tanpa proyek: tampilkan tombol buat proyek pertama
+  if (allProyek.length === 0 && isAdmin) {
+    sw.innerHTML = `
+      <button class="proyek-switch-btn proyek-switch-empty" onclick="openModalProyek()">
+        <span style="font-size:13px">＋</span>
+        <span class="proyek-switch-label">Buat Proyek</span>
+      </button>`;
+    return;
+  }
 
   sw.innerHTML = `
     <button class="proyek-switch-btn" onclick="toggleProyekDropdown(event)">
