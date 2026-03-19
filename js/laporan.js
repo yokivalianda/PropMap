@@ -1,10 +1,114 @@
 // ── LAPORAN KPI ──────────────────────────────────
 function setPeriod(p) {
   curPeriod = p;
+  // Reset custom range saat pilih preset
+  curDateFrom = '';
+  curDateTo   = '';
   document.querySelectorAll('.ptag').forEach(c => c.classList.toggle('on', c.dataset.p === p));
+  // Tutup custom picker jika terbuka
+  const picker = document.getElementById('customRangePicker');
+  if (picker) picker.style.display = 'none';
+  updatePeriodLabel();
   renderLapKpi();
   renderCharts();
 }
+
+// ── CUSTOM DATE RANGE ────────────────────────────
+function toggleCustomRange() {
+  const picker = document.getElementById('customRangePicker');
+  if (!picker) return;
+  const isOpen = picker.style.display !== 'none';
+  picker.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Pre-fill dengan nilai saat ini
+    const from = document.getElementById('dateFrom');
+    const to   = document.getElementById('dateTo');
+    if (from && !from.value) from.value = curDateFrom || getFirstDayOfMonth();
+    if (to   && !to.value)   to.value   = curDateTo   || getTodayStr();
+  }
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('dateFrom')?.value || '';
+  const to   = document.getElementById('dateTo')?.value   || '';
+  if (from && to && from > to) {
+    showToast('Tanggal mulai harus sebelum tanggal akhir', '⚠️'); return;
+  }
+  curDateFrom = from;
+  curDateTo   = to;
+  curPeriod   = 'custom';
+  // Nonaktifkan semua preset
+  document.querySelectorAll('.ptag').forEach(c => c.classList.remove('on'));
+  document.getElementById('customRangePicker').style.display = 'none';
+  updatePeriodLabel();
+  renderLapKpi();
+  renderCharts();
+  showToast('Filter diterapkan', '✅');
+}
+
+function clearCustomRange() {
+  curDateFrom = '';
+  curDateTo   = '';
+  setPeriod('bulan');
+  const from = document.getElementById('dateFrom');
+  const to   = document.getElementById('dateTo');
+  if (from) from.value = '';
+  if (to)   to.value   = '';
+}
+
+// Preset cepat di dalam date picker
+function setQuickRange(type) {
+  const today = new Date();
+  let from, to;
+  if (type === '7d') {
+    from = new Date(today); from.setDate(today.getDate() - 6);
+    to = today;
+  } else if (type === '30d') {
+    from = new Date(today); from.setDate(today.getDate() - 29);
+    to = today;
+  } else if (type === '90d') {
+    from = new Date(today); from.setDate(today.getDate() - 89);
+    to = today;
+  } else if (type === 'bln-lalu') {
+    from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    to   = new Date(today.getFullYear(), today.getMonth(), 0);
+  } else if (type === 'kwartal-lalu') {
+    const q = Math.floor(today.getMonth() / 3);
+    from = new Date(today.getFullYear(), (q - 1) * 3, 1);
+    to   = new Date(today.getFullYear(), q * 3, 0);
+  }
+  if (from && to) {
+    document.getElementById('dateFrom').value = dateToStr(from);
+    document.getElementById('dateTo').value   = dateToStr(to);
+  }
+}
+
+function updatePeriodLabel() {
+  const lbl  = document.getElementById('activePeriodLabel');
+  const btn  = document.getElementById('clearRangeBtn');
+  const isCustom = curPeriod === 'custom' && (curDateFrom || curDateTo);
+  if (lbl) {
+    if (isCustom) {
+      const from = curDateFrom ? fDateShort(curDateFrom) : '—';
+      const to   = curDateTo   ? fDateShort(curDateTo)   : '—';
+      lbl.textContent   = `${from} – ${to}`;
+      lbl.style.display = 'inline';
+    } else {
+      lbl.style.display = 'none';
+    }
+  }
+  if (btn) btn.style.display = isCustom ? 'inline' : 'none';
+  // Highlight tombol custom saat aktif
+  document.querySelectorAll('.ptag-custom').forEach(el =>
+    el.classList.toggle('active', isCustom)
+  );
+}
+
+function getFirstDayOfMonth() {
+  const d = new Date(); d.setDate(1); return dateToStr(d);
+}
+function getTodayStr() { return dateToStr(new Date()); }
+function dateToStr(d) { return d.toISOString().slice(0, 10); }
 
 function renderLapKpi() {
   const k       = filterByPeriod(allKons, curPeriod);

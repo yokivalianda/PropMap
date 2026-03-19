@@ -155,14 +155,31 @@ function setBtnLoading(id, loading, txt) {
 }
 
 // ── FILTER DATA BY PERIOD ────────────────────────
+// curDateFrom / curDateTo diset oleh filter custom (format YYYY-MM-DD)
+// Jika kosong, filter period preset yang aktif
+let curDateFrom = '';
+let curDateTo   = '';
+
 function filterByPeriod(list, period) {
+  // Mode custom range
+  if (curDateFrom || curDateTo) {
+    const from = curDateFrom ? new Date(curDateFrom + 'T00:00:00') : null;
+    const to   = curDateTo   ? new Date(curDateTo   + 'T23:59:59') : null;
+    return list.filter(k => {
+      const d = new Date(k.created_at);
+      if (from && d < from) return false;
+      if (to   && d > to)   return false;
+      return true;
+    });
+  }
+  // Mode preset
   const now = new Date();
   return list.filter(k => {
     const d = new Date(k.created_at);
-    if (period === 'bulan')    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    if (period === 'kuartal')  { const q = Math.floor(now.getMonth() / 3); return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear(); }
-    if (period === 'tahun')    return d.getFullYear() === now.getFullYear();
-    return true; // semua
+    if (period === 'bulan')   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'kuartal') { const q = Math.floor(now.getMonth() / 3); return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear(); }
+    if (period === 'tahun')   return d.getFullYear() === now.getFullYear();
+    return true;
   });
 }
 

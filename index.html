@@ -260,6 +260,40 @@
         <button class="ptag"    data-p="kuartal" onclick="setPeriod('kuartal')">Kuartal Ini</button>
         <button class="ptag"    data-p="tahun"   onclick="setPeriod('tahun')">Tahun Ini</button>
         <button class="ptag"    data-p="semua"   onclick="setPeriod('semua')">Semua</button>
+        <button class="ptag ptag-custom"         onclick="toggleCustomRange()">📅 Custom</button>
+      </div>
+      <!-- Active period label -->
+      <div style="padding:0 18px 4px;display:flex;align-items:center;gap:8px">
+        <span id="activePeriodLabel" style="display:none;font-size:11px;font-weight:700;color:var(--brand-light);background:var(--brand-soft);padding:3px 10px;border-radius:var(--r-full)"></span>
+        <button id="clearRangeBtn" onclick="clearCustomRange()" style="display:none;font-size:11px;color:var(--rose);background:var(--rose-soft);border:none;border-radius:var(--r-full);padding:3px 10px;cursor:pointer;font-family:var(--font-body);font-weight:700">✕ Reset</button>
+      </div>
+      <!-- Custom date range picker -->
+      <div id="customRangePicker" style="display:none;margin:0 18px 12px;background:var(--bg-overlay);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:16px;animation:pageIn .2s ease">
+        <!-- Quick presets -->
+        <div style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Preset Cepat</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+          <button class="quick-preset" onclick="setQuickRange('7d')">7 Hari</button>
+          <button class="quick-preset" onclick="setQuickRange('30d')">30 Hari</button>
+          <button class="quick-preset" onclick="setQuickRange('90d')">90 Hari</button>
+          <button class="quick-preset" onclick="setQuickRange('bln-lalu')">Bln Lalu</button>
+          <button class="quick-preset" onclick="setQuickRange('kwartal-lalu')">Kwt Lalu</button>
+        </div>
+        <!-- Date inputs -->
+        <div style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Rentang Tanggal</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div>
+            <div class="field-label" style="margin-bottom:5px">Dari</div>
+            <input type="date" class="field-input" id="dateFrom" style="padding:10px 12px;font-size:13px"/>
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:5px">Sampai</div>
+            <input type="date" class="field-input" id="dateTo" style="padding:10px 12px;font-size:13px"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn-secondary" onclick="toggleCustomRange()" style="padding:10px">Batal</button>
+          <button class="btn-primary"   onclick="applyCustomRange()"  style="padding:10px">Terapkan →</button>
+        </div>
       </div>
 
       <div class="lap-kpi" id="lapKpi"></div>
