@@ -88,6 +88,8 @@ function applyTheme(isLight, animate) {
   if (desc)   desc.textContent  = isLight ? 'Saat ini menggunakan tema terang' : 'Saat ini menggunakan tema gelap';
   const hdrBtn = document.getElementById('themeBtnHdr');
   if (hdrBtn) hdrBtn.textContent = isLight ? '☀️' : '🌙';
+  const sidebarThemeIco = document.getElementById('sidebarThemeIco');
+  if (sidebarThemeIco) sidebarThemeIco.textContent = isLight ? '☀️' : '🌙';
   // Re-render charts after theme change
   if (curPage === 'laporan') setTimeout(() => renderCharts(), 350);
 }
@@ -231,3 +233,16 @@ function _doDownloadTemplate() {
   XLSX.writeFile(wb, 'template-import-marketpro.xlsx');
   showToast('Template berhasil diunduh', '📥');
 }
+
+// ── DESKTOP SIDEBAR RESIZE HANDLER ───────────────
+window.addEventListener('resize', () => {
+  const isDesktop = window.innerWidth >= 768;
+  const sidebarUser   = document.getElementById('sidebarUser');
+  const sidebarBottom = document.getElementById('sidebarBottom');
+  if (sidebarUser)   sidebarUser.style.display   = (isDesktop && me) ? 'flex' : 'none';
+  if (sidebarBottom) sidebarBottom.style.display  = (isDesktop && me) ? 'flex' : 'none';
+});
+
+// Patch applyTheme to also sync sidebar icon
+const _origApplyTheme = applyTheme;
+// (sync handled inside applyTheme via quickToggleTheme → sidebarThemeIco is set)

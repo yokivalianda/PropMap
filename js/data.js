@@ -57,6 +57,17 @@ async function afterLogin(user) {
 
 // ── HEADER & ADMIN UI ───────────────────────────
 function updateHeaderUI() {
+  // Deteksi desktop
+  const isDesktop = window.innerWidth >= 768;
+  const sidebarUser   = document.getElementById('sidebarUser');
+  const sidebarBottom = document.getElementById('sidebarBottom');
+  if (sidebarUser)   sidebarUser.style.display   = isDesktop ? 'flex'  : 'none';
+  if (sidebarBottom) sidebarBottom.style.display  = isDesktop ? 'flex'  : 'none';
+  // Sync sidebar user info
+  const sidebarAv   = document.getElementById('sidebarAvatar');
+  const sidebarName = document.getElementById('sidebarName');
+  const sidebarRole = document.getElementById('sidebarRole');
+  const sidebarThemeIco = document.getElementById('sidebarThemeIco');
   const name = myProf?.full_name || me.email;
   const initial = name.charAt(0).toUpperCase();
   const ci = Math.abs(hsh(me.id)) % 8;
@@ -66,6 +77,10 @@ function updateHeaderUI() {
   const rb = document.getElementById('hRole');
   rb.textContent = myProf?.role === 'admin' ? 'Admin' : 'Marketing';
   rb.className = `pill-role${myProf?.role === 'admin' ? ' admin' : ''}`;
+  if (sidebarAv)   { sidebarAv.textContent = initial; sidebarAv.className = `sidebar-user-av av${ci}`; }
+  if (sidebarName) sidebarName.textContent = name;
+  if (sidebarRole) sidebarRole.textContent = myProf?.role === 'admin' ? '👑 Admin' : '📊 Marketing';
+  if (sidebarThemeIco) sidebarThemeIco.textContent = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
   document.getElementById('heroName').innerHTML = `${name.split(' ')[0]}<br><span class="accent">Selamat bekerja!</span>`;
   document.getElementById('setHeroName').textContent = name;
   document.getElementById('setEmail').textContent = me.email;

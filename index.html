@@ -465,21 +465,46 @@
 
   <!-- TAB BAR -->
   <nav class="tabbar">
-    <button class="tab on" id="tab-dashboard" onclick="switchPage('dashboard')">
+    <!-- Logo desktop (hidden on mobile via CSS) -->
+    <div class="sidebar-logo">
+      <span class="sidebar-logo-mark">🎯</span>
+      <span class="sidebar-logo-text">Market<em>Pro</em></span>
+    </div>
+    <!-- Sidebar user info (desktop only) -->
+    <div class="sidebar-user" id="sidebarUser" style="display:none">
+      <div class="sidebar-user-av" id="sidebarAvatar"></div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebarName">—</div>
+        <div class="sidebar-user-role" id="sidebarRole">Marketing</div>
+      </div>
+    </div>
+    <button class="tab on" id="tab-dashboard" data-label="Dashboard" onclick="switchPage('dashboard')">
       <span class="tab-ico">🏠</span>Dashboard
     </button>
-    <button class="tab" id="tab-konsumen" onclick="switchPage('konsumen')">
+    <button class="tab" id="tab-konsumen" data-label="Konsumen" onclick="switchPage('konsumen')">
       <span class="tab-ico">👥</span>Konsumen
     </button>
-    <button class="tab" id="tab-kalender" onclick="switchPage('kalender')">
+    <button class="tab" id="tab-kalender" data-label="Kalender" onclick="switchPage('kalender')">
       <span class="tab-ico">📅</span>Kalender
     </button>
-    <button class="tab" id="tab-laporan" onclick="switchPage('laporan')">
+    <button class="tab" id="tab-laporan" data-label="Laporan" onclick="switchPage('laporan')">
       <span class="tab-ico">📊</span>Laporan
     </button>
-    <button class="tab" id="tab-pengaturan" onclick="switchPage('pengaturan')">
+    <button class="tab" id="tab-pengaturan" data-label="Pengaturan" onclick="switchPage('pengaturan')">
       <span class="tab-ico">⚙️</span>Pengaturan
     </button>
+    <!-- Sidebar bottom actions (desktop only) -->
+    <div class="sidebar-bottom" id="sidebarBottom" style="display:none">
+      <button class="sidebar-action" onclick="quickToggleTheme()">
+        <span id="sidebarThemeIco">🌙</span><span>Ganti Tema</span>
+      </button>
+      <button class="sidebar-action" onclick="openNotif()">
+        <span>🔔</span><span>Pengingat</span>
+      </button>
+      <button class="sidebar-action danger" onclick="doLogout()">
+        <span>🚪</span><span>Keluar</span>
+      </button>
+    </div>
   </nav>
 </div>
 
