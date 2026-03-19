@@ -6,7 +6,7 @@ function kprLabel(s) {
   return {'kpr-btn':'KPR BTN','kpr-bni':'KPR BNI','kpr-bri':'KPR BRI','kpr-mandiri':'KPR Mandiri','kpr-bsm':'KPR Syariah','cash-keras':'Cash Keras','cash-bertahap':'Cash Bertahap','subsidi':'KPR Subsidi FLPP'}[s] || s || '—';
 }
 function sumberLabel(s) {
-  return {referral:'Referral',medsos:'Media Sosial',pameran:'Pameran',brosur:'Brosur',website:'Website','walk-in':'Walk In',telepon:'Telepon'}[s] || s || '—';
+  return {tiktok:'TikTok',facebook:'Facebook',instagram:'Instagram',broker:'Broker',datangan:'Konsumen Datangan'}[s] || s || '—';
 }
 
 // ── FORMAT ───────────────────────────────────────
