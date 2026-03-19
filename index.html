@@ -240,6 +240,11 @@
           <option value="">Semua Marketing</option>
         </select>
       </div>
+      <div style="padding:0 18px 8px">
+        <button onclick="openImportModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:var(--emerald-soft);border:1.5px dashed rgba(16,185,129,.4);border-radius:var(--r-md);color:var(--emerald);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)">
+          <span style="font-size:17px">📥</span> Import dari Excel / CSV
+        </button>
+      </div>
       <div class="kons-feed" id="konsFeed"></div>
       <button class="fab" onclick="openAddModal()">＋</button>
     </div>
@@ -600,6 +605,75 @@
       <button class="sheet-close" onclick="closeModal('modalUsers')">✕</button>
     </div>
     <div class="sheet-body" id="usersBody"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: IMPORT EXCEL ══ -->
+<div class="modal-bg" id="modalImport">
+  <div class="modal-sheet">
+    <div class="sheet-pill"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">📥 Import dari Excel / CSV</div>
+      <button class="sheet-close" onclick="closeModal('modalImport')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <!-- Template download -->
+      <div style="background:var(--brand-soft);border:1px solid rgba(99,102,241,.2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">💡</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--brand-light)">Belum punya template?</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:2px">Download template Excel agar format kolom sesuai</div>
+        </div>
+        <button onclick="downloadTemplate()" style="padding:7px 13px;background:var(--brand);border:none;border-radius:var(--r-sm);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body);white-space:nowrap">⬇ Template</button>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="importDropzone"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleImportDrop(event)"
+        onclick="document.getElementById('importFileInput').click()"
+        style="border:2px dashed var(--glass-border);border-radius:var(--r-lg);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px">
+        <div style="font-size:36px;margin-bottom:10px">📂</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-2)">Drag & drop file ke sini</div>
+        <div style="font-size:12px;color:var(--text-4);margin-top:4px">atau klik untuk pilih file</div>
+        <div style="font-size:11px;color:var(--text-4);margin-top:8px">.xlsx · .xls · .csv</div>
+      </div>
+      <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this)"/>
+
+      <!-- Status -->
+      <div id="importStatus"></div>
+
+      <!-- Preview -->
+      <div id="importPreviewWrap" style="display:none;margin-top:8px">
+        <div id="importPreview"></div>
+      </div>
+
+      <!-- Confirm button -->
+      <button id="btnImportConfirm" onclick="confirmImport()" class="btn-primary" style="display:none;margin-top:16px">
+        ✅ Import Sekarang
+      </button>
+
+      <!-- Format notes -->
+      <div style="margin-top:16px;padding:12px 14px;background:var(--bg-elevated);border-radius:var(--r-md);border:1px solid var(--glass-border)">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Format Kolom yang Dikenali</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">
+          <div style="font-size:11px;color:var(--text-3)">✓ Nama / Nama Lengkap</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ HP / No. HP / Telepon</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Unit / Tipe Unit</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Kavling / No. Kavling</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Harga / Harga Jual</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ DP / Uang Muka</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Status / Pipeline</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ KPR / Pembiayaan</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Sumber / Sumber Leads</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Tgl. Booking</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Follow-up / Tgl. Follow-up</div>
+          <div style="font-size:11px;color:var(--text-3)">✓ Catatan / Notes</div>
+        </div>
+        <div style="font-size:10px;color:var(--text-4);margin-top:8px">💡 Nama kolom fleksibel — sistem otomatis mendeteksi walaupun nama kolom berbeda-beda</div>
+      </div>
+    </div>
   </div>
 </div>
 

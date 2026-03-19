@@ -164,3 +164,70 @@ function filterByPeriod(list, period) {
     return true; // semua
   });
 }
+
+// ── DOWNLOAD TEMPLATE EXCEL ───────────────────────
+function downloadTemplate() {
+  if (typeof XLSX === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = _doDownloadTemplate;
+    document.head.appendChild(s);
+  } else {
+    _doDownloadTemplate();
+  }
+}
+
+function _doDownloadTemplate() {
+  const wb = XLSX.utils.book_new();
+  const headers = [
+    'Nama Lengkap','No. HP','Tipe Unit','No. Kavling',
+    'Harga (Rp)','DP (Rp)','Status','Tgl. Booking',
+    'Tgl. Follow-up','KPR / Pembiayaan','Sumber Leads','Catatan'
+  ];
+  const examples = [
+    ['Budi Santoso','081234567890','T36/72','B-12',
+     350000000,35000000,'Booking','2024-03-01',
+     '2024-03-15','KPR BTN','Referral','Konsumen prioritas'],
+    ['Siti Rahayu','089876543210','T45/90','C-5',
+     450000000,45000000,'Proses DP','2024-02-15',
+     '','KPR BNI','Media Sosial','Via Instagram'],
+    ['Ahmad Fauzi','082112345678','T54/110','A-3',
+     550000000,0,'Kumpul Berkas','2024-01-20',
+     '2024-03-20','Cash Keras','Pameran',''],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:22},{wch:16},{wch:12},{wch:14},
+    {wch:16},{wch:14},{wch:16},{wch:14},
+    {wch:14},{wch:18},{wch:16},{wch:24}
+  ];
+
+  // Info sheet
+  const infoData = [
+    ['PANDUAN PENGISIAN TEMPLATE MarketPro'],
+    [''],
+    ['Kolom','Keterangan','Contoh Nilai'],
+    ['Nama Lengkap','Wajib diisi','Budi Santoso'],
+    ['No. HP','Wajib diisi, format 08xx atau 62xx','081234567890'],
+    ['Tipe Unit','Opsional','T36/72, T45/90'],
+    ['No. Kavling','Opsional','B-12, A-05'],
+    ['Harga (Rp)','Angka saja, tanpa Rp atau titik','350000000'],
+    ['DP (Rp)','Angka saja','35000000'],
+    ['Status','Booking / Proses DP / Kumpul Berkas / Selesai / Batal','Booking'],
+    ['Tgl. Booking','Format YYYY-MM-DD','2024-03-01'],
+    ['Tgl. Follow-up','Format YYYY-MM-DD (opsional)','2024-03-15'],
+    ['KPR / Pembiayaan','KPR BTN / KPR BNI / KPR BRI / KPR Mandiri / KPR Syariah / Cash Keras / Cash Bertahap / KPR Subsidi FLPP','KPR BTN'],
+    ['Sumber Leads','Referral / Media Sosial / Pameran / Brosur / Website / Walk In / Telepon','Referral'],
+    ['Catatan','Opsional, teks bebas','Konsumen prioritas'],
+  ];
+  const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
+  wsInfo['!cols'] = [{wch:20},{wch:50},{wch:30}];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Data Konsumen');
+  XLSX.utils.book_append_sheet(wb, wsInfo, 'Panduan');
+  XLSX.writeFile(wb, 'template-import-marketpro.xlsx');
+  showToast('Template berhasil diunduh', '📥');
+}

@@ -380,3 +380,260 @@ function showSetupGuide() {
     </div>
   </div>`;
 }
+
+// ── IMPORT EXCEL ──────────────────────────────────
+function openImportModal() {
+  document.getElementById('importDropzone').classList.remove('dragover');
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importPreview').innerHTML = '';
+  document.getElementById('importPreviewWrap').style.display = 'none';
+  document.getElementById('importStatus').innerHTML = '';
+  document.getElementById('btnImportConfirm').style.display = 'none';
+  window._importRows = [];
+  openModal('modalImport');
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('importDropzone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processImportFile(file);
+}
+
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (file) processImportFile(file);
+}
+
+function processImportFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx','xls','csv'].includes(ext)) {
+    showImportStatus('❌ File harus berformat .xlsx, .xls, atau .csv', 'error');
+    return;
+  }
+
+  showImportStatus('⏳ Membaca file...', 'info');
+
+  if (typeof XLSX === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => _readExcel(file);
+    document.head.appendChild(s);
+  } else {
+    _readExcel(file);
+  }
+}
+
+function _readExcel(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb   = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const raw  = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!raw.length) { showImportStatus('❌ Sheet kosong atau tidak ada data', 'error'); return; }
+
+      // Auto-detect column mapping (flexible header names)
+      const sample = Object.keys(raw[0]);
+      const map = autoMapColumns(sample);
+      const rows = raw.map(r => mapRow(r, map)).filter(r => r.nama && r.hp);
+
+      if (!rows.length) {
+        showImportStatus(`❌ Tidak ada baris valid. Pastikan ada kolom Nama dan HP/No. HP`, 'error');
+        return;
+      }
+
+      window._importRows = rows;
+      renderImportPreview(rows, sample, map);
+      showImportStatus(`✅ ${rows.length} baris siap diimport${raw.length - rows.length > 0 ? ` (${raw.length - rows.length} baris dilewati karena nama/HP kosong)` : ''}`, 'success');
+      document.getElementById('btnImportConfirm').style.display = 'block';
+    } catch(err) {
+      showImportStatus('❌ Gagal membaca file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Map header variations ke field internal
+function autoMapColumns(headers) {
+  const norm = h => h.toLowerCase().replace(/[\s_\-\.\/]/g,'');
+  const aliases = {
+    nama:        ['nama','name','namalengkap','namakonsumen','fullname'],
+    hp:          ['hp','nohp','telepon','phone','notelp','nomortelepon','wa','whatsapp','nowa','handphone'],
+    unit:        ['unit','tipeunit','typeunit','tipeproperty','tipe'],
+    kavling:     ['kavling','nokavling','kavlingnomor','no','nokav','blok'],
+    harga:       ['harga','price','hargajual','hargaunit','nilai'],
+    dp:          ['dp','uangmuka','downpayment','jumlahdp'],
+    status:      ['status','pipeline','fase'],
+    tgl_booking: ['tglbooking','tanggalbooking','tglbook','bookingdate','tgltransaksibooking'],
+    tgl_followup:['tglfollowup','followup','jadwalfollowup','tglfu','followupdate'],
+    kpr:         ['kpr','pembiayaan','jeniskpr','tipekpr','financing'],
+    sumber:      ['sumber','sumberleads','leads','channel','sourceofleads','asal'],
+    catatan:     ['catatan','notes','keterangan','note','remark'],
+  };
+  const result = {};
+  headers.forEach(h => {
+    const n = norm(h);
+    for (const [field, aliasArr] of Object.entries(aliases)) {
+      if (aliasArr.some(a => n.includes(a) || a.includes(n))) {
+        if (!result[field]) result[field] = h;
+        break;
+      }
+    }
+  });
+  return result;
+}
+
+function mapRow(row, map) {
+  const get = f => map[f] ? String(row[map[f]] ?? '').trim() : '';
+  const nama = get('nama');
+  const hp   = get('hp').replace(/\D/g,'').replace(/^62/,'0').replace(/^0{2}62/,'0');
+  if (!nama || !hp) return null;
+
+  // Normalize status
+  const rawStatus = get('status').toLowerCase();
+  const statusMap = {
+    booking:['booking','book'], dp:['dp','proses dp','uang muka','down payment'],
+    berkas:['berkas','kumpul berkas','dokumen'], selesai:['selesai','akad','done','lunas'],
+    batal:['batal','cancel','batal']
+  };
+  let status = 'booking';
+  for (const [k,v] of Object.entries(statusMap)) { if (v.some(s => rawStatus.includes(s))) { status = k; break; } }
+
+  // Normalize KPR
+  const rawKpr = get('kpr').toLowerCase();
+  let kpr = '';
+  if (rawKpr.includes('btn')) kpr = 'kpr-btn';
+  else if (rawKpr.includes('bni')) kpr = 'kpr-bni';
+  else if (rawKpr.includes('bri')) kpr = 'kpr-bri';
+  else if (rawKpr.includes('mandiri')) kpr = 'kpr-mandiri';
+  else if (rawKpr.includes('syariah')||rawKpr.includes('bsm')) kpr = 'kpr-bsm';
+  else if (rawKpr.includes('keras')) kpr = 'cash-keras';
+  else if (rawKpr.includes('bertahap')) kpr = 'cash-bertahap';
+  else if (rawKpr.includes('subsidi')||rawKpr.includes('flpp')) kpr = 'subsidi';
+
+  // Normalize sumber
+  const rawSumber = get('sumber').toLowerCase();
+  let sumber = '';
+  if (rawSumber.includes('referral')) sumber = 'referral';
+  else if (rawSumber.includes('medsos')||rawSumber.includes('sosial')||rawSumber.includes('instagram')||rawSumber.includes('facebook')) sumber = 'medsos';
+  else if (rawSumber.includes('pameran')) sumber = 'pameran';
+  else if (rawSumber.includes('brosur')||rawSumber.includes('spanduk')) sumber = 'brosur';
+  else if (rawSumber.includes('website')||rawSumber.includes('online')) sumber = 'website';
+  else if (rawSumber.includes('walk')) sumber = 'walk-in';
+  else if (rawSumber.includes('telepon')||rawSumber.includes('call')) sumber = 'telepon';
+
+  // Parse harga & dp
+  const parseRp = v => { const n = parseFloat(String(v).replace(/[^0-9.]/g,'')); return isNaN(n) ? 0 : n < 1000 ? n * 1e6 : n; };
+
+  // Parse date
+  const parseDate = v => {
+    if (!v) return null;
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    const s = String(v).trim();
+    if (!s) return null;
+    // Try DD/MM/YYYY or DD-MM-YYYY
+    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m) { const y = m[3].length===2?'20'+m[3]:m[3]; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+    // Try YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    return null;
+  };
+
+  return {
+    nama, hp,
+    unit:        get('unit'),
+    kavling:     get('kavling'),
+    harga:       parseRp(get('harga')),
+    dp:          parseRp(get('dp')),
+    status, kpr, sumber,
+    tgl_booking: parseDate(map.tgl_booking ? row[map.tgl_booking] : ''),
+    tgl_followup:parseDate(map.tgl_followup ? row[map.tgl_followup] : ''),
+    catatan:     get('catatan'),
+  };
+}
+
+function renderImportPreview(rows, allHeaders, map) {
+  const wrap = document.getElementById('importPreviewWrap');
+  const el   = document.getElementById('importPreview');
+  wrap.style.display = 'block';
+
+  // Show mapping summary
+  const mappedFields = Object.entries(map).filter(([,v])=>v).map(([k,v])=>`<span style="background:var(--brand-soft);color:var(--brand-light);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700">${v} → ${k}</span>`).join(' ');
+  const unmapped = allHeaders.filter(h => !Object.values(map).includes(h));
+
+  let html = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Kolom Terdeteksi</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${mappedFields || '<span style="color:var(--text-4);font-size:12px">Tidak ada kolom terdeteksi</span>'}</div>
+      ${unmapped.length ? `<div style="font-size:10px;color:var(--text-4);margin-top:5px">Dilewati: ${unmapped.join(', ')}</div>` : ''}
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Preview (maks. 5 baris)</div>
+    <div style="overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--glass-border)">
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead>
+        <tr style="background:var(--bg-elevated)">
+          <th style="padding:7px 10px;text-align:left;color:var(--text-3);font-weight:700">Nama</th>
+          <th style="padding:7px 10px;text-align:left;color:var(--text-3);font-weight:700">HP</th>
+          <th style="padding:7px 10px;text-align:left;color:var(--text-3);font-weight:700">Unit</th>
+          <th style="padding:7px 10px;text-align:left;color:var(--text-3);font-weight:700">Status</th>
+          <th style="padding:7px 10px;text-align:left;color:var(--text-3);font-weight:700">Harga</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.slice(0,5).map((r,i)=>`
+          <tr style="border-top:1px solid var(--glass-border);background:${i%2?'var(--glass-10)':'transparent'}">
+            <td style="padding:7px 10px;font-weight:600">${r.nama}</td>
+            <td style="padding:7px 10px;color:var(--text-2)">${r.hp}</td>
+            <td style="padding:7px 10px;color:var(--text-2)">${r.unit||'—'}</td>
+            <td style="padding:7px 10px"><span class="s-badge s-${r.status}" style="font-size:9px">${sLabel(r.status)}</span></td>
+            <td style="padding:7px 10px;color:var(--text-2)">${fRp(r.harga)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+    ${rows.length > 5 ? `<div style="font-size:11px;color:var(--text-4);margin-top:6px;text-align:center">... dan ${rows.length-5} baris lainnya</div>` : ''}`;
+  el.innerHTML = html;
+}
+
+function showImportStatus(msg, type) {
+  const colors = { error: 'var(--rose)', success: 'var(--emerald)', info: 'var(--brand-light)' };
+  document.getElementById('importStatus').innerHTML =
+    `<div style="font-size:13px;font-weight:600;color:${colors[type]||'var(--text-1)'};padding:10px 0">${msg}</div>`;
+}
+
+async function confirmImport() {
+  const rows = window._importRows;
+  if (!rows || !rows.length) return;
+
+  const btn = document.getElementById('btnImportConfirm');
+  btn.disabled = true; btn.textContent = `Mengimport 0/${rows.length}...`;
+
+  let ok = 0, fail = 0;
+  const batchSize = 20;
+
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const batch = rows.slice(i, i + batchSize).map(r => ({
+      ...r,
+      owner_id:   me.id,
+      owner_name: myProf?.full_name || me.email,
+      berkas:     { ktp:false, kk:false, slip:false, tabungan:false, npwp:false, surat:false },
+      log:        [{ action: 'Diimport dari Excel', time: new Date().toISOString(), note: r.catatan || '' }],
+    }));
+    const { error } = await sb.from('konsumen').insert(batch);
+    if (error) { fail += batch.length; }
+    else        { ok  += batch.length; }
+    btn.textContent = `Mengimport ${Math.min(i+batchSize, rows.length)}/${rows.length}...`;
+  }
+
+  await loadKons();
+  closeModal('modalImport');
+  if (fail === 0) {
+    showToast(`✅ ${ok} konsumen berhasil diimport!`, '');
+  } else {
+    showToast(`⚠️ ${ok} berhasil, ${fail} gagal`, '');
+  }
+  if (curPage === 'konsumen') renderKons();
+  if (curPage === 'dashboard') renderDash();
+}
