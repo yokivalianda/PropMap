@@ -5,40 +5,53 @@
 // ── LOAD PROYEK ──────────────────────────────────
 async function loadProyek() {
   if (!sb || !me || !myProf) return;
-
-  // Wrapped ketat — tidak boleh throw ke caller (afterLogin)
   allProyek = [];
   try {
-    let res;
-    if (myProf.role === 'admin') {
-      res = await sb.from('proyek')
-        .select('id, nama, deskripsi, warna, owner_id, is_archived, proyek_members(user_id, role)')
-        .eq('is_archived', false)
-        .order('created_at', { ascending: true });
+    // Query sederhana tanpa join dulu — lebih reliable
+    const { data, error } = await sb.from('proyek')
+      .select('*')
+      .eq('is_archived', false)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.warn('loadProyek:', error.message);
     } else {
-      res = await sb.from('proyek')
-        .select('id, nama, deskripsi, warna, owner_id, is_archived, proyek_members!inner(user_id, role)')
-        .eq('is_archived', false)
-        .eq('proyek_members.user_id', me.id)
-        .order('created_at', { ascending: true });
+      // Admin: lihat semua, Marketing: filter by membership
+      if (myProf.role === 'admin') {
+        allProyek = data || [];
+      } else {
+        // Ambil proyek_id yang user ini jadi member
+        const { data: mData } = await sb.from('proyek_members')
+          .select('proyek_id')
+          .eq('user_id', me.id);
+        const ids = (mData || []).map(m => m.proyek_id);
+        allProyek = (data || []).filter(p => ids.includes(p.id));
+      }
     }
-    if (res.error) {
-      console.warn('loadProyek:', res.error.message);
-    } else {
-      allProyek = res.data || [];
+
+    // Load members per proyek (untuk modal edit)
+    if (allProyek.length > 0) {
+      const { data: mData } = await sb.from('proyek_members')
+        .select('proyek_id, user_id, role');
+      const mMap = {};
+      (mData || []).forEach(m => {
+        if (!mMap[m.proyek_id]) mMap[m.proyek_id] = [];
+        mMap[m.proyek_id].push(m);
+      });
+      allProyek = allProyek.map(p => ({ ...p, proyek_members: mMap[p.id] || [] }));
     }
-    // Restore pilihan proyek dari localStorage
+
+    // Restore pilihan dari localStorage
     if (allProyek.length > 0) {
       const saved = localStorage.getItem('mp_proyek_' + me.id);
       const found = allProyek.find(p => p.id === saved);
       if (found) { curProyekId = found.id; curProyek = found; }
+    } else {
+      curProyekId = null; curProyek = null;
     }
   } catch(e) {
-    // Jangan re-throw — cukup log
     console.warn('loadProyek exception:', e.message);
   }
-
-  // Selalu render switcher apapun hasilnya
   renderProyekSwitcher();
 }
 
@@ -50,16 +63,13 @@ function renderProyekSwitcher() {
 
   const isAdmin = myProf?.role === 'admin';
 
-  // Marketing tanpa proyek → sembunyikan
   if (!isAdmin && allProyek.length === 0) {
     bar.style.display = 'none';
     return;
   }
 
-  // Tampilkan bar
   bar.style.display = 'block';
 
-  // Admin, belum ada proyek → tombol buat proyek
   if (isAdmin && allProyek.length === 0) {
     sw.innerHTML = `
       <button class="proyek-switch-btn proyek-switch-empty" onclick="openModalProyek()">
@@ -69,7 +79,6 @@ function renderProyekSwitcher() {
     return;
   }
 
-  // Normal
   const label = curProyek ? curProyek.nama : 'Semua Proyek';
   const warna = curProyek ? curProyek.warna : '#6366f1';
   sw.innerHTML = `
@@ -102,13 +111,14 @@ function toggleProyekDropdown(e) {
       <div class="proyek-dd-item ${!curProyekId ? 'active' : ''}" onclick="setProyek(null)">
         <span class="proyek-dot" style="background:#6366f1"></span>
         <span>Semua Proyek</span>
+        <span style="font-size:10px;color:var(--text-4);margin-left:auto">${allKons.length}</span>
         ${!curProyekId ? '<span class="proyek-check">✓</span>' : ''}
       </div>
       ${allProyek.map(p => `
         <div class="proyek-dd-item ${curProyekId === p.id ? 'active' : ''}" onclick="setProyek('${p.id}')">
           <span class="proyek-dot" style="background:${p.warna}"></span>
           <span class="proyek-dd-name">${p.nama}</span>
-          <span class="proyek-dd-count">${countKonsumenProyek(p.id)}</span>
+          <span style="font-size:10px;color:var(--text-4);margin-left:auto">${allKons.filter(k=>k.proyek_id===p.id).length}</span>
           ${curProyekId === p.id ? '<span class="proyek-check">✓</span>' : ''}
           ${isAdmin ? `<button class="proyek-dd-edit" onclick="event.stopPropagation();openEditProyek('${p.id}')">✏️</button>` : ''}
         </div>`).join('')}
@@ -116,24 +126,17 @@ function toggleProyekDropdown(e) {
 
   document.body.appendChild(dd);
 
-  // Posisi relatif ke bar
   const bar = document.getElementById('proyekBar');
   if (bar) {
     const rect = bar.getBoundingClientRect();
     dd.style.top  = (rect.bottom + 4) + 'px';
     dd.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 268)) + 'px';
   }
-
   setTimeout(() => document.addEventListener('click', closeProyekDropdown, { once: true }), 10);
 }
 
 function closeProyekDropdown() {
   document.getElementById('proyekDropdown')?.remove();
-}
-
-function countKonsumenProyek(id) {
-  const n = allKons.filter(k => k.proyek_id === id).length;
-  return n > 0 ? `<span style="font-size:10px;color:var(--text-4);margin-left:auto">${n}</span>` : '';
 }
 
 // ── SET PROYEK AKTIF ─────────────────────────────
@@ -159,10 +162,11 @@ function filterKonsByProyek(list) {
 // ── MODAL TAMBAH / EDIT PROYEK ───────────────────
 function openModalProyek(id = null) {
   closeProyekDropdown();
-  const p        = id ? allProyek.find(x => x.id === id) : null;
-  const members  = p?.proyek_members || [];
-  const mktg     = allProfs.filter(x => x.role !== 'admin');
-  const warnas   = ['#6366f1','#a855f7','#10b981','#f59e0b','#f43f5e','#0ea5e9','#f97316','#ec4899','#14b8a6','#84cc16'];
+  const p      = id ? allProyek.find(x => x.id === id) : null;
+  const members = p?.proyek_members || [];
+  const mktg   = allProfs.filter(x => x.role !== 'admin');
+  const warnas = ['#6366f1','#a855f7','#10b981','#f59e0b','#f43f5e',
+                  '#0ea5e9','#f97316','#ec4899','#14b8a6','#84cc16'];
   const curWarna = p?.warna || '#6366f1';
 
   const titleEl = document.getElementById('proyekModalTitle');
@@ -172,28 +176,39 @@ function openModalProyek(id = null) {
     <input type="hidden" id="proyekEditId" value="${p?.id || ''}"/>
     <div class="field">
       <label class="field-label">Nama Proyek *</label>
-      <input type="text" class="field-input" id="proyekNama" placeholder="Contoh: Cluster Melati" value="${p?.nama || ''}"/>
+      <input type="text" class="field-input" id="proyekNama"
+        placeholder="Contoh: Cluster Melati" value="${p?.nama || ''}"/>
     </div>
     <div class="field">
       <label class="field-label">Deskripsi</label>
-      <input type="text" class="field-input" id="proyekDesc" placeholder="Keterangan singkat (opsional)" value="${p?.deskripsi || ''}"/>
+      <input type="text" class="field-input" id="proyekDesc"
+        placeholder="Keterangan singkat (opsional)" value="${p?.deskripsi || ''}"/>
     </div>
     <div class="field">
       <label class="field-label">Warna Penanda</label>
-      <div class="warna-picker">
-        ${warnas.map(w => `<div class="warna-opt${curWarna===w?' active':''}" style="background:${w}" onclick="pickWarna('${w}')"></div>`).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:8px 0">
+        ${warnas.map(w => `
+          <div data-warna="${w}"
+               style="width:30px;height:30px;border-radius:50%;background:${w};cursor:pointer;
+                      transition:transform .15s,box-shadow .15s;flex-shrink:0;
+                      ${curWarna===w ? 'outline:3px solid var(--text-1);outline-offset:3px;transform:scale(1.1)' : ''}"
+               onclick="pickWarna('${w}')"></div>`).join('')}
       </div>
       <input type="hidden" id="proyekWarna" value="${curWarna}"/>
     </div>
     ${mktg.length ? `
     <div class="field">
       <label class="field-label">Anggota Tim</label>
-      <div class="member-checklist">
+      <div style="display:flex;flex-direction:column;gap:6px">
         ${mktg.map(m => {
-          const checked = members.some(mb => mb.user_id === m.id);
+          const isMember = members.some(mb => mb.user_id === m.id);
           const ci = Math.abs(hsh(m.id)) % 8;
-          return `<label class="member-check-item">
-            <input type="checkbox" class="member-cb" value="${m.id}" ${checked ? 'checked' : ''}/>
+          return `<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;
+                               background:var(--glass-10);border:1px solid var(--glass-border);
+                               border-radius:var(--r-md);cursor:pointer">
+            <input type="checkbox" class="member-cb" value="${m.id}"
+                   ${isMember ? 'checked' : ''}
+                   style="width:16px;height:16px;accent-color:var(--brand);flex-shrink:0"/>
             <div class="member-av av${ci}">${(m.full_name||m.email).charAt(0).toUpperCase()}</div>
             <div>
               <div style="font-size:13px;font-weight:600">${m.full_name||m.email}</div>
@@ -202,10 +217,14 @@ function openModalProyek(id = null) {
           </label>`;
         }).join('')}
       </div>
-    </div>` : `<div style="font-size:12px;color:var(--text-3);padding:8px 0">Belum ada tim marketing.</div>`}
+    </div>` : `<p style="font-size:12px;color:var(--text-3);padding:8px 0">Belum ada tim marketing.</p>`}
     ${p ? `
     <div style="border-top:1px solid var(--glass-border);margin-top:16px;padding-top:14px">
-      <button onclick="archiveProyek('${p.id}')" style="width:100%;padding:10px;background:var(--rose-soft);border:1px solid rgba(244,63,94,.2);border-radius:var(--r-md);color:var(--rose);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body)">
+      <button onclick="archiveProyek('${p.id}')"
+              style="width:100%;padding:10px;background:var(--rose-soft);
+                     border:1px solid rgba(244,63,94,.2);border-radius:var(--r-md);
+                     color:var(--rose);font-size:13px;font-weight:700;cursor:pointer;
+                     font-family:var(--font-body)">
         🗄 Arsipkan Proyek
       </button>
     </div>` : ''}`;
@@ -215,11 +234,14 @@ function openModalProyek(id = null) {
 
 function openEditProyek(id) { openModalProyek(id); }
 
+// ── PICK WARNA — pakai data attribute, bukan style.backgroundColor ──
 function pickWarna(w) {
   document.getElementById('proyekWarna').value = w;
-  document.querySelectorAll('.warna-opt').forEach(el => {
-    const bg = el.style.backgroundColor || el.style.background;
-    el.classList.toggle('active', bg === w);
+  document.querySelectorAll('[data-warna]').forEach(el => {
+    const isActive = el.dataset.warna === w;
+    el.style.outline      = isActive ? '3px solid var(--text-1)' : 'none';
+    el.style.outlineOffset = isActive ? '3px' : '0';
+    el.style.transform     = isActive ? 'scale(1.1)' : 'scale(1)';
   });
 }
 
@@ -238,11 +260,13 @@ async function saveProyek() {
     let proyekId = id;
 
     if (id) {
+      // Update proyek
       const { error } = await sb.from('proyek')
         .update({ nama, deskripsi: desc, warna, updated_at: new Date().toISOString() })
         .eq('id', id);
       if (error) throw error;
     } else {
+      // Insert proyek baru
       const { data, error } = await sb.from('proyek')
         .insert({ nama, deskripsi: desc, warna, owner_id: me.id })
         .select('id').single();
@@ -250,19 +274,28 @@ async function saveProyek() {
       proyekId = data.id;
     }
 
-    // Sync members
+    // Sync members — hapus lama, insert baru
     await sb.from('proyek_members').delete().eq('proyek_id', proyekId);
-    const rows = memberIds.map(uid => ({ proyek_id: proyekId, user_id: uid, role: 'marketing' }));
-    rows.push({ proyek_id: proyekId, user_id: me.id, role: 'admin' });
-    if (rows.length > 0) {
-      const { error: me2 } = await sb.from('proyek_members').insert(rows);
-      if (me2) console.warn('member insert:', me2.message);
-    }
 
-    showToast(id ? 'Proyek diperbarui ✅' : 'Proyek dibuat ✅', '');
+    // Selalu include admin/owner
+    const allIds = [...new Set([...memberIds, me.id])];
+    const rows = allIds.map(uid => ({
+      proyek_id: proyekId,
+      user_id:   uid,
+      role:      uid === me.id ? 'admin' : 'marketing'
+    }));
+    const { error: merr } = await sb.from('proyek_members').insert(rows);
+    if (merr) console.warn('member insert error:', merr.message);
+
     closeModal('modalProyek');
+    showToast(id ? 'Proyek diperbarui' : 'Proyek berhasil dibuat', '✅');
+
+    // Reload dan langsung switch ke proyek baru
     await loadProyek();
+    if (!id && proyekId) await setProyek(proyekId);
+
   } catch(e) {
+    console.error('saveProyek:', e);
     showToast('Gagal: ' + e.message, '❌');
   }
   setBtnLoading('btnSaveProyek', false, 'Simpan Proyek');
@@ -273,16 +306,16 @@ async function archiveProyek(id) {
   if (!confirm('Arsipkan proyek ini? Data konsumen tetap tersimpan.')) return;
   const { error } = await sb.from('proyek').update({ is_archived: true }).eq('id', id);
   if (!error) {
-    if (curProyekId === id) await setProyek(null);
+    if (curProyekId === id) { curProyekId = null; curProyek = null; }
     closeModal('modalProyek');
     await loadProyek();
     showToast('Proyek diarsipkan', '🗄');
   } else {
-    showToast('Gagal mengarsipkan', '❌');
+    showToast('Gagal: ' + error.message, '❌');
   }
 }
 
-// ── BADGE & LABEL PROYEK ─────────────────────────
+// ── BADGE & LABEL ─────────────────────────────────
 function proyekBadge(proyekId) {
   if (!proyekId) return '';
   const p = allProyek.find(x => x.id === proyekId);
