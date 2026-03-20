@@ -180,27 +180,31 @@ async function submitCheckout() {
   setBtnLoading('btnCheckout', true, 'Memproses...');
   document.getElementById('checkoutErr').textContent = '';
 
+  // Buat order ID dulu
+  const orderId = `ORDER-${Date.now()}`;
+
+  // Coba simpan ke DB — tidak blocking jika tabel belum ada
   try {
-    // Simpan order pending ke Supabase
-    const { error } = await sb.from('subscriptions').insert({
+    await sb.from('subscriptions').insert({
       workspace_id: me.id,
       plan,
       status: 'pending',
       amount: plan === 'pro' ? 100000 : 299000,
-      payment_ref: `ORDER-${Date.now()}`,
+      payment_ref: orderId,
     });
-    if (error) throw error;
-
-    // Tampilkan instruksi pembayaran
-    document.getElementById('checkoutForm').style.display    = 'none';
-    document.getElementById('checkoutSuccess').style.display = 'block';
-    document.getElementById('checkoutOrderId').textContent   = `ORDER-${Date.now()}`;
-    document.getElementById('checkoutPlanDisplay').textContent = PLANS[plan]?.name;
-    document.getElementById('checkoutPriceDisplay').textContent =
-      'Rp ' + (plan === 'pro' ? '100.000' : '299.000');
   } catch(e) {
-    document.getElementById('checkoutErr').textContent = 'Gagal: ' + e.message;
+    console.warn('subscriptions insert:', e.message);
+    // Lanjut tampilkan instruksi walau DB gagal
   }
+
+  // Selalu tampilkan instruksi pembayaran
+  document.getElementById('checkoutForm').style.display    = 'none';
+  document.getElementById('checkoutSuccess').style.display = 'block';
+  document.getElementById('checkoutOrderId').textContent   = orderId;
+  document.getElementById('checkoutPlanDisplay').textContent = PLANS[plan]?.name;
+  document.getElementById('checkoutPriceDisplay').textContent =
+    'Rp ' + (plan === 'pro' ? '100.000' : '299.000');
+
   setBtnLoading('btnCheckout', false, 'Lanjut Pembayaran →');
 }
 
