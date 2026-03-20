@@ -65,7 +65,7 @@ async function afterLogin(user) {
   }
   myProf = prof;
   setLoadTxt('Memuat data...');
-  await Promise.all([loadProfs(), loadKons()]);
+  await Promise.all([loadProfs(), loadKonsWithFallback ? loadKonsWithFallback() : loadKons()]);
   setupRealtime();
   hideSplash(); hideAuth();
   const shell = document.getElementById('shell');
@@ -77,6 +77,7 @@ async function afterLogin(user) {
   renderDash(); renderKons();
   if (typeof renderMonthFilter === "function") renderMonthFilter();
   // Init push notification setelah login
+  if (typeof initOffline === 'function') initOffline();
   setTimeout(() => { if(typeof initPush === 'function') initPush(); }, 1000);
   setTimeout(() => { if(typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders(); }, 2000);
   initTheme();
@@ -137,6 +138,10 @@ async function loadKons() {
   const { data } = await q;
   allKons = data || [];
   updateNotifPip();
+  // Cache ke IndexedDB untuk mode offline
+  if (typeof cacheKonsumen === 'function' && allKons.length > 0) {
+    cacheKonsumen(allKons).catch(() => {});
+  }
 }
 
 // ── REALTIME ─────────────────────────────────────
@@ -184,6 +189,24 @@ async function saveKons() {
     sumber:      document.getElementById('fSumber').value,
     catatan:     document.getElementById('fCatatan').value.trim(),
   };
+  // Cek mode offline
+  if (typeof saveKonsOffline === 'function') {
+    const obj2 = {
+      nama, hp,
+      unit:         document.getElementById('fUnit').value.trim(),
+      kavling:      document.getElementById('fKavling').value.trim(),
+      harga:        getRpValue('fHarga'),
+      dp:           getRpValue('fDP'),
+      status:       document.getElementById('fStatus').value,
+      tgl_booking:  document.getElementById('fTglBooking').value || null,
+      tgl_followup: document.getElementById('fTglFollowup').value || null,
+      kpr:          document.getElementById('fKPR').value,
+      sumber:       document.getElementById('fSumber').value,
+      catatan:      document.getElementById('fCatatan').value.trim(),
+    };
+    const handled = await saveKonsOffline(obj2, eid || null);
+    if (handled) { closeModal('modalAdd'); return; }
+  }
   setBtnLoading('btnSave', true, 'Menyimpan...');
   try {
     if (eid) {

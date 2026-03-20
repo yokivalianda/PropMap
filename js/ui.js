@@ -404,7 +404,7 @@ function cardHtml(k) {
   const bOk   = bList.filter(b => b.done).length;
   const bTot  = bList.length;
   const hasFollowup = k.tgl_followup && new Date(k.tgl_followup) >= new Date(new Date().toDateString());
-  return `<div class="kons-card st-${k.status}" onclick="openDetail('${k.id}')">
+  return `<div class="kons-card st-${k.status}" ${k._pending ? 'data-pending="true"' : ''} onclick="openDetail('${k.id}')">
     <div class="card-top">
       <div>
         <div class="card-name">${k.nama}</div>

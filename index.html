@@ -135,6 +135,14 @@
 
 <!-- ══ APP SHELL ══ -->
 <div id="shell">
+
+  <!-- Offline bar -->
+  <div id="offlineBar" style="display:none">
+    <span class="offline-icon">📵</span>
+    <span id="offlineBanner">Tidak ada koneksi — perubahan disimpan lokal</span>
+    <button class="offline-sync-btn" onclick="triggerSync ? triggerSync() : null">↑ Sync</button>
+  </div>
+
   <header class="header">
     <div class="header-brand">
       <div class="header-mark">🎯</div>
@@ -952,6 +960,7 @@
 <script src="js/kalender.js"></script>
 <script src="js/dokumen.js"></script>
 <script src="js/target.js"></script>
+<script src="js/offline.js"></script>
 <script src="js/push.js"></script>
 
 <script>

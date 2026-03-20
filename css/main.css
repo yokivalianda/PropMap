@@ -1538,3 +1538,83 @@ html.light .kons-card.st-acc { background: linear-gradient(135deg, rgba(236,72,1
 @media (min-width: 768px) {
   .month-filter-bar { padding-left: 20px; padding-right: 20px; }
 }
+
+/* ════════════════════════════════════════
+   MODE OFFLINE
+════════════════════════════════════════ */
+#offlineBar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px max(env(safe-area-inset-right),16px) 8px max(env(safe-area-inset-left),16px);
+  background: #412402;
+  border-bottom: 1px solid rgba(239,159,39,.3);
+  font-size: 12px;
+  font-weight: 600;
+  color: #EF9F27;
+  flex-shrink: 0;
+  z-index: 50;
+}
+html.light #offlineBar {
+  background: #FAEEDA;
+  color: #854F0B;
+  border-color: rgba(186,117,23,.3);
+}
+.offline-icon { font-size: 14px; flex-shrink: 0; }
+#offlineBanner { flex: 1; font-size: 11px; }
+.offline-sync-btn {
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: rgba(239,159,39,.2);
+  border: 1px solid rgba(239,159,39,.4);
+  color: #EF9F27;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: var(--font-body);
+  flex-shrink: 0;
+}
+html.light .offline-sync-btn {
+  background: rgba(186,117,23,.1);
+  border-color: rgba(186,117,23,.3);
+  color: #854F0B;
+}
+
+/* Badge antrian sync di header */
+.offline-queue-btn {
+  position: relative;
+}
+.offline-queue-badge {
+  position: absolute;
+  top: 2px; right: 2px;
+  min-width: 15px; height: 15px;
+  border-radius: var(--r-full);
+  background: var(--amber);
+  color: #fff;
+  font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--bg-base);
+}
+
+/* Kartu konsumen dengan perubahan offline pending */
+.kons-card[data-pending="true"] {
+  border-style: dashed;
+  border-color: var(--amber);
+  opacity: .85;
+}
+.kons-card[data-pending="true"]::after {
+  content: '⏳';
+  position: absolute;
+  top: 8px; right: 10px;
+  font-size: 10px;
+}
+
+/* Indikator offline di status bar */
+html.is-offline .live-badge {
+  background: rgba(239,159,39,.15);
+  color: var(--amber);
+  border-color: rgba(239,159,39,.3);
+}
+html.is-offline .live-dot {
+  background: var(--amber);
+  animation: none;
+}
