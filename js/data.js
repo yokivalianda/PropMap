@@ -75,6 +75,7 @@ async function afterLogin(user) {
   await loadTarget();
   if (typeof setupTargetAdminLink === "function") setupTargetAdminLink();
   renderDash(); renderKons();
+  if (typeof renderMonthFilter === "function") renderMonthFilter();
   // Init push notification setelah login
   setTimeout(() => { if(typeof initPush === 'function') initPush(); }, 1000);
   setTimeout(() => { if(typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders(); }, 2000);
@@ -158,7 +159,7 @@ function setupRealtime() {
       updateNotifPip();
       if (curPage === 'dashboard') renderDash();
       if (typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders();
-      if (curPage === 'konsumen')  renderKons();
+      if (curPage === 'konsumen')  { renderKons(); if (typeof renderMonthFilter === 'function') renderMonthFilter(); }
       if (curPage === 'laporan')   { renderLapKpi(); renderCharts(); }
       if (curPage === 'kalender')  renderKalender();
     }).subscribe();

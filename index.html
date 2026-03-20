@@ -249,6 +249,8 @@
         <button class="ftag sort-btn" id="sortBtn" onclick="toggleSort()">A→Z</button>
         <div class="filter-divider"></div>
         <button class="ftag" id="filterAdvBtn" onclick="toggleFilterAdv()">⚙ Filter</button>
+        <div class="filter-divider"></div>
+        <button class="ftag" id="monthFilterBtn" onclick="toggleMonthFilter()">📆 Bulan</button>
       </div>
 
       <!-- Panel Filter Lanjutan -->
@@ -332,6 +334,22 @@
         <select class="admin-select" id="adminSel" onchange="renderKons()">
           <option value="">Semua Marketing</option>
         </select>
+      </div>
+
+      <!-- Filter Bulan -->
+      <div class="month-filter-bar" id="monthFilterBar" style="display:none">
+        <div class="month-filter-head">
+          <div class="month-filter-left">
+            <span class="month-filter-label">Bulan</span>
+            <select class="month-filter-field" id="monthFilterField" onchange="renderMonthFilter();renderKons()">
+              <option value="tgl_booking">Booking</option>
+              <option value="created_at">Input Data</option>
+              <option value="tgl_followup">Follow-up</option>
+            </select>
+          </div>
+          <button class="month-filter-clear" id="monthFilterClear" onclick="clearMonthFilter()" style="display:none">✕ Reset</button>
+        </div>
+        <div class="month-chips" id="monthChips"></div>
       </div>
 
       <div style="padding:0 18px 8px">

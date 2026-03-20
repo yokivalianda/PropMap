@@ -1451,3 +1451,90 @@ html.light .kons-card.st-cek-lokasi { background: linear-gradient(135deg, rgba(1
 html.light .kons-card.st-acc { background: linear-gradient(135deg, rgba(236,72,153,.05) 0%, var(--bg-overlay) 60%); }
 .pc-acc .pipe-card::before { background: #ec4899; }
 .pc-acc .pipe-num { color: #ec4899; }
+
+/* ════════════════════════════════════════
+   FILTER BULAN
+════════════════════════════════════════ */
+.month-filter-bar {
+  padding: 8px 18px 10px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--glass-border);
+  animation: pageIn .2s ease;
+}
+.month-filter-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.month-filter-left { display: flex; align-items: center; gap: 8px; }
+.month-filter-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: .7px;
+}
+.month-filter-field {
+  font-size: 11px; font-weight: 700;
+  background: var(--glass-10);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  padding: 3px 10px;
+  font-family: var(--font-body);
+  outline: none; cursor: pointer;
+}
+.month-filter-clear {
+  font-size: 11px; font-weight: 700;
+  color: var(--rose); background: var(--rose-soft);
+  border: 1px solid rgba(244,63,94,.2);
+  border-radius: var(--r-full);
+  padding: 3px 10px;
+  cursor: pointer; font-family: var(--font-body);
+  display: flex; align-items: center; gap: 4px;
+  transition: all .15s;
+}
+.month-filter-clear:hover { background: var(--rose); color: #fff; }
+
+/* Chips bulan */
+.month-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.mchip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--glass-border);
+  background: var(--bg-overlay);
+  color: var(--text-2);
+  font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: var(--font-body);
+  transition: all .15s; white-space: nowrap;
+}
+.mchip:hover { background: var(--glass-10); color: var(--text-1); border-color: var(--glass-border-hi); }
+.mchip.on {
+  background: var(--brand-soft);
+  border-color: rgba(99,102,241,.45);
+  color: var(--brand-light);
+}
+.mchip:active { transform: scale(.94); }
+.mchip-count {
+  background: var(--glass-10);
+  border-radius: var(--r-full);
+  padding: 1px 6px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+.mchip.on .mchip-count {
+  background: rgba(99,102,241,.2);
+}
+
+/* Badge pada tombol filter */
+.mfilter-badge {
+  background: var(--brand);
+  color: #fff;
+  font-size: 9px; font-weight: 800;
+  padding: 1px 5px;
+  border-radius: var(--r-full);
+  margin-left: 2px;
+}
+
+@media (min-width: 768px) {
+  .month-filter-bar { padding-left: 20px; padding-right: 20px; }
+}

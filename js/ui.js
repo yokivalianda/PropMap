@@ -247,6 +247,114 @@ function applyAdvFilters(list) {
   return list;
 }
 
+// ── FILTER BULAN ─────────────────────────────────
+let curMonthKey = ''; // format: YYYY-MM
+
+function toggleMonthFilter() {
+  const bar = document.getElementById('monthFilterBar');
+  const btn = document.getElementById('monthFilterBtn');
+  if (!bar) return;
+  const isOpen = bar.style.display !== 'none';
+  bar.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('on', !isOpen);
+  if (!isOpen) renderMonthFilter();
+}
+
+function renderMonthFilter() {
+  const chipsEl = document.getElementById('monthChips');
+  if (!chipsEl) return;
+
+  const field = document.getElementById('monthFilterField')?.value || 'tgl_booking';
+
+  // Kumpulkan semua bulan yang ada dari field yang dipilih
+  const monthSet = {};
+  allKons.forEach(k => {
+    const raw = k[field];
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    const key   = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    if (!monthSet[key]) monthSet[key] = label;
+  });
+
+  // Sort terbaru dulu
+  const months = Object.entries(monthSet).sort((a, b) => b[0].localeCompare(a[0]));
+
+  if (!months.length) {
+    chipsEl.innerHTML = '<span style="font-size:12px;color:var(--text-4)">Tidak ada data</span>';
+    return;
+  }
+
+  chipsEl.innerHTML = months.map(([key, label]) => `
+    <button class="mchip ${curMonthKey === key ? 'on' : ''}"
+            onclick="setMonthFilter('${key}')">
+      ${label}
+      <span class="mchip-count">${countByMonth(key, field)}</span>
+    </button>`).join('');
+}
+
+function countByMonth(monthKey, field) {
+  return allKons.filter(k => {
+    const raw = k[field]; if (!raw) return false;
+    const d = new Date(raw); if (isNaN(d)) return false;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return key === monthKey;
+  }).length;
+}
+
+function setMonthFilter(key) {
+  curMonthKey = curMonthKey === key ? '' : key; // toggle
+  const clearBtn = document.getElementById('monthFilterClear');
+  const btn      = document.getElementById('monthFilterBtn');
+  if (clearBtn) clearBtn.style.display = curMonthKey ? 'flex' : 'none';
+  if (btn) btn.classList.toggle('on', !!curMonthKey || document.getElementById('monthFilterBar')?.style.display !== 'none');
+  renderMonthFilter();
+  renderKons();
+  updateMonthFilterBadge();
+}
+
+function clearMonthFilter() {
+  curMonthKey = '';
+  const clearBtn = document.getElementById('monthFilterClear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  updateMonthFilterBadge();
+  renderMonthFilter();
+  renderKons();
+}
+
+function updateMonthFilterBadge() {
+  const btn = document.getElementById('monthFilterBtn');
+  if (!btn) return;
+  const isOpen = document.getElementById('monthFilterBar')?.style.display !== 'none';
+  btn.classList.toggle('on', !!curMonthKey || isOpen);
+  // Badge bulan aktif
+  const badge = btn.querySelector('.mfilter-badge');
+  if (curMonthKey) {
+    const d = new Date(curMonthKey + '-01');
+    const short = d.toLocaleDateString('id-ID', { month: 'short' });
+    if (!badge) {
+      const b = document.createElement('span');
+      b.className = 'mfilter-badge';
+      b.textContent = short;
+      btn.appendChild(b);
+    } else badge.textContent = short;
+  } else {
+    badge?.remove();
+  }
+}
+
+function applyMonthFilter(list) {
+  if (!curMonthKey) return list;
+  const field = document.getElementById('monthFilterField')?.value || 'tgl_booking';
+  return list.filter(k => {
+    const raw = k[field]; if (!raw) return false;
+    const d = new Date(raw); if (isNaN(d)) return false;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return key === curMonthKey;
+  });
+}
+
 function renderKons() {
   const q  = (document.getElementById('searchFld')?.value || '').toLowerCase();
   const ow = document.getElementById('adminSel')?.value || '';
@@ -262,6 +370,8 @@ function renderKons() {
 
   // Filter lanjutan
   list = applyAdvFilters(list);
+  // Filter bulan
+  list = applyMonthFilter(list);
 
   if (curSort === 'az') list.sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
   if (curSort === 'za') list.sort((a, b) => b.nama.localeCompare(a.nama, 'id'));
