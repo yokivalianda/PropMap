@@ -127,6 +127,9 @@ function setupAdminUI() {
   document.getElementById('adminGrp').style.display  = isAdmin ? 'block' : 'none';
   document.getElementById('adminBar').classList.toggle('show', isAdmin);
   if (isAdmin) fillAdminSel();
+  // Tampilkan backup untuk marketing Pro (dikontrol juga oleh updatePlanUI)
+  const mktgBackup = document.getElementById('marketingBackupGrp');
+  if (mktgBackup) mktgBackup.style.display = (!isAdmin && typeof isPro === 'function' && isPro()) ? 'block' : 'none';
 }
 
 // ── LOAD DATA ────────────────────────────────────

@@ -111,6 +111,12 @@ function updatePlanUI() {
   if (manageRow) {
     manageRow.style.display = isPro() ? 'flex' : 'none';
   }
+  // Tampilkan backup section untuk marketing Pro
+  const mktgBackup = document.getElementById('marketingBackupGrp');
+  if (mktgBackup) {
+    const isAdmin = myProf?.role === 'admin';
+    mktgBackup.style.display = (!isAdmin && isPro()) ? 'block' : 'none';
+  }
 }
 
 // ── MODAL UPGRADE ─────────────────────────────────
