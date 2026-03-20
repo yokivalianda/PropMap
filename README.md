@@ -53,7 +53,7 @@ Install di HP (PWA), multi-user, sinkronisasi real-time — lengkap dengan siste
 
 ---
 
-## 💰 Sistem Monetisasi
+## 💰 Paket Langganan per Bulan/Tahun
 
 | | Gratis | Pro | Business |
 |---|---|---|---|
