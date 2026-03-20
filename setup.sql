@@ -283,6 +283,18 @@ CREATE POLICY "Admin lihat subscription workspace"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+-- User bisa insert order milik sendiri
+CREATE POLICY "User insert subscription sendiri"
+  ON subscriptions FOR INSERT
+  WITH CHECK (workspace_id = auth.uid());
+
+-- Admin bisa update semua subscription (approve/reject)
+CREATE POLICY "Admin update subscription"
+  ON subscriptions FOR UPDATE
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
 -- 3. Function: cek plan aktif user
 CREATE OR REPLACE FUNCTION get_active_plan(uid uuid)
 RETURNS text AS $$
@@ -326,3 +338,36 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON TABLE subscriptions IS 'History langganan PropMap per workspace';
+
+-- ════════════════════════════════════════════════════════
+-- FIX RLS SUBSCRIPTIONS — Admin bisa lihat semua order
+-- Jalankan di Supabase SQL Editor
+-- ════════════════════════════════════════════════════════
+DROP POLICY IF EXISTS "Admin lihat subscription workspace" ON subscriptions;
+DROP POLICY IF EXISTS "User insert subscription sendiri" ON subscriptions;
+DROP POLICY IF EXISTS "Admin update subscription" ON subscriptions;
+DROP POLICY IF EXISTS "User dan admin select subscription" ON subscriptions;
+
+-- User bisa insert order sendiri
+CREATE POLICY "User insert subscription sendiri"
+  ON subscriptions FOR INSERT
+  WITH CHECK (workspace_id = auth.uid());
+
+-- User lihat order sendiri, Admin lihat semua
+CREATE POLICY "User dan admin select subscription"
+  ON subscriptions FOR SELECT
+  USING (
+    workspace_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Admin bisa update semua order (untuk aktivasi)
+CREATE POLICY "Admin update subscription"
+  ON subscriptions FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
