@@ -472,19 +472,26 @@
         <div class="section-head">
           <div class="section-title"><span class="sticon">📤</span>Export Laporan</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <button class="btn-secondary" onclick="exportPDF()" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px">
             <span style="font-size:18px">📄</span>
             <div style="text-align:left">
               <div style="font-size:13px;font-weight:700">Export PDF</div>
-              <div style="font-size:10px;color:var(--text-3);font-weight:400">Laporan siap cetak</div>
+              <div style="font-size:10px;color:var(--text-3);font-weight:400">Siap cetak</div>
+            </div>
+          </button>
+          <button class="btn-secondary" onclick="exportXLSX()" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-color:rgba(16,185,129,.3);color:var(--emerald)">
+            <span style="font-size:18px">📗</span>
+            <div style="text-align:left">
+              <div style="font-size:13px;font-weight:700">Export Excel</div>
+              <div style="font-size:10px;color:var(--text-3);font-weight:400">Multi-sheet XLSX</div>
             </div>
           </button>
           <button class="btn-secondary" onclick="exportCSV()" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px">
             <span style="font-size:18px">📊</span>
             <div style="text-align:left">
               <div style="font-size:13px;font-weight:700">Export CSV</div>
-              <div style="font-size:10px;color:var(--text-3);font-weight:400">Buka di Excel / Sheets</div>
+              <div style="font-size:10px;color:var(--text-3);font-weight:400">Plain data</div>
             </div>
           </button>
         </div>
@@ -550,6 +557,13 @@
             <div class="set-row-info">
               <div class="set-row-name">👥 Kelola Pengguna</div>
               <div class="set-row-desc">Atur role anggota tim</div>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+          <div class="set-row" onclick="exportXLSX()">
+            <div class="set-row-info">
+              <div class="set-row-name">📗 Export Excel (XLSX)</div>
+              <div class="set-row-desc">Multi-sheet: data konsumen, ringkasan, per marketing</div>
             </div>
             <div class="set-arrow">›</div>
           </div>

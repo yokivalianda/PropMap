@@ -380,6 +380,172 @@ function exportCSV() {
   showToast('Data diekspor ke CSV', '📤');
 }
 
+// ── EXPORT EXCEL XLSX ────────────────────────────
+function exportXLSX() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Memuat library Excel...', '⏳');
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = _doExportXLSX;
+    document.head.appendChild(s);
+    return;
+  }
+  _doExportXLSX();
+}
+
+function _doExportXLSX() {
+  try {
+    const wb    = XLSX.utils.book_new();
+    const k     = filterByPeriod(allKons, curPeriod);
+    const today = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+
+    // ── SHEET 1: Data Konsumen ────────────────────
+    const konsHeaders = [
+      'No','Nama Konsumen','No. HP','Unit','Kavling',
+      'Status','Harga (Rp)','DP (Rp)','Tgl Booking',
+      'Tgl Follow-up','KPR/Pembiayaan','Sumber Leads',
+      'Marketing','Berkas Lengkap','Catatan'
+    ];
+    const konsRows = k.map((c, i) => {
+      const bList = normBerkas(c.berkas || []);
+      const bOk   = bList.filter(b => b.done).length;
+      const bTot  = bList.length;
+      return [
+        i + 1,
+        c.nama || '',
+        c.hp || '',
+        c.unit || '',
+        c.kavling || '',
+        sLabel(c.status),
+        c.harga || 0,
+        c.dp || 0,
+        c.tgl_booking || '',
+        c.tgl_followup || '',
+        kprLabel(c.kpr),
+        sumberLabel(c.sumber),
+        ownerName(c.owner_id),
+        bTot > 0 ? `${bOk}/${bTot}` : '-',
+        c.catatan || ''
+      ];
+    });
+
+    const wsKons = XLSX.utils.aoa_to_sheet([konsHeaders, ...konsRows]);
+
+    // Lebar kolom
+    wsKons['!cols'] = [
+      {wch:4},{wch:24},{wch:16},{wch:10},{wch:8},
+      {wch:14},{wch:16},{wch:16},{wch:12},
+      {wch:12},{wch:18},{wch:14},
+      {wch:16},{wch:12},{wch:30}
+    ];
+
+    // Style header (bold + background)
+    const headerStyle = { font: { bold: true }, fill: { fgColor: { rgb: '6366F1' } }, font: { bold: true, color: { rgb: 'FFFFFF' } } };
+    konsHeaders.forEach((_, ci) => {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: ci });
+      if (wsKons[cellRef]) wsKons[cellRef].s = headerStyle;
+    });
+
+    XLSX.utils.book_append_sheet(wb, wsKons, 'Data Konsumen');
+
+    // ── SHEET 2: Ringkasan ────────────────────────
+    const statuses = [
+      { k: 'cek-lokasi', l: 'Prospek Konsumen' },
+      { k: 'booking',    l: 'Booking' },
+      { k: 'dp',         l: 'Proses DP' },
+      { k: 'berkas',     l: 'Kumpul Berkas' },
+      { k: 'acc',        l: 'SP3K/ACC' },
+      { k: 'selesai',    l: 'Selesai (Akad)' },
+      { k: 'batal',      l: 'Batal' },
+    ];
+    const totalSelesai = k.filter(x => x.status === 'selesai');
+    const totalNilai   = totalSelesai.reduce((s, x) => s + (x.harga || 0), 0);
+    const totalDP      = k.reduce((s, x) => s + (x.dp || 0), 0);
+
+    const ringkasanData = [
+      ['LAPORAN RINGKASAN MARKETPRO', ''],
+      ['Tanggal Export', today],
+      ['Periode', getPeriodLabel()],
+      ['', ''],
+      ['PIPELINE STATUS', 'Jumlah Konsumen'],
+      ...statuses.map(s => [s.l, k.filter(x => x.status === s.k).length]),
+      ['', ''],
+      ['TOTAL KONSUMEN (excl. Prospek)', k.filter(x => x.status !== 'cek-lokasi').length],
+      ['Akad Selesai', totalSelesai.length],
+      ['Total Nilai Jual (Rp)', totalNilai],
+      ['Total DP Masuk (Rp)', totalDP],
+    ];
+
+    // Sumber leads breakdown
+    ringkasanData.push(['', '']);
+    ringkasanData.push(['SUMBER LEADS', 'Jumlah']);
+    const sumberMap = {};
+    k.forEach(x => { const s = x.sumber || 'Lainnya'; sumberMap[s] = (sumberMap[s]||0)+1; });
+    Object.entries(sumberMap).sort((a,b)=>b[1]-a[1]).forEach(([s,n]) => {
+      ringkasanData.push([sumberLabel(s), n]);
+    });
+
+    // KPR breakdown
+    ringkasanData.push(['', '']);
+    ringkasanData.push(['JENIS PEMBIAYAAN', 'Jumlah']);
+    const kprMap = {};
+    k.forEach(x => { if (x.kpr) kprMap[x.kpr] = (kprMap[x.kpr]||0)+1; });
+    Object.entries(kprMap).sort((a,b)=>b[1]-a[1]).forEach(([k2,n]) => {
+      ringkasanData.push([kprLabel(k2), n]);
+    });
+
+    const wsRingkasan = XLSX.utils.aoa_to_sheet(ringkasanData);
+    wsRingkasan['!cols'] = [{wch:30},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, wsRingkasan, 'Ringkasan');
+
+    // ── SHEET 3: Per Marketing (admin only) ───────
+    if (myProf?.role === 'admin' && allProfs.length > 0) {
+      const mktg = allProfs.filter(p => p.role !== 'admin');
+      if (mktg.length > 0) {
+        const mktgHeaders = ['Marketing', 'Total Konsumen', 'Prospek', 'Booking', 'Proses DP', 'Berkas', 'SP3K/ACC', 'Selesai', 'Batal', 'Nilai Jual (Rp)', 'DP Masuk (Rp)'];
+        const mktgRows = mktg.map(p => {
+          const mk = k.filter(x => x.owner_id === p.id);
+          return [
+            p.full_name || p.email,
+            mk.filter(x => x.status !== 'cek-lokasi').length,
+            mk.filter(x => x.status === 'cek-lokasi').length,
+            mk.filter(x => x.status === 'booking').length,
+            mk.filter(x => x.status === 'dp').length,
+            mk.filter(x => x.status === 'berkas').length,
+            mk.filter(x => x.status === 'acc').length,
+            mk.filter(x => x.status === 'selesai').length,
+            mk.filter(x => x.status === 'batal').length,
+            mk.filter(x => x.status === 'selesai').reduce((s,x)=>s+(x.harga||0),0),
+            mk.reduce((s,x)=>s+(x.dp||0),0),
+          ];
+        });
+        const wsMktg = XLSX.utils.aoa_to_sheet([mktgHeaders, ...mktgRows]);
+        wsMktg['!cols'] = [{wch:20},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:18},{wch:16}];
+        XLSX.utils.book_append_sheet(wb, wsMktg, 'Per Marketing');
+      }
+    }
+
+    // Download
+    const fileName = `MarketPro-Laporan-${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showToast('Laporan Excel berhasil diunduh', '📊');
+
+  } catch(e) {
+    console.error('exportXLSX:', e);
+    showToast('Gagal export Excel: ' + e.message, '❌');
+  }
+}
+
+function getPeriodLabel() {
+  if (curDateFrom || curDateTo) {
+    const from = curDateFrom ? new Date(curDateFrom).toLocaleDateString('id-ID') : '—';
+    const to   = curDateTo   ? new Date(curDateTo).toLocaleDateString('id-ID')   : '—';
+    return `${from} – ${to}`;
+  }
+  const labels = { bulan: 'Bulan Ini', kuartal: 'Kuartal Ini', tahun: 'Tahun Ini', semua: 'Semua Waktu' };
+  return labels[curPeriod] || 'Semua Waktu';
+}
+
 // ── EXPORT PDF via jsPDF ─────────────────────────
 function exportPDF() {
   if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
