@@ -1,6 +1,168 @@
 // ═══════════════════════════════════════════════
 // FITUR UPLOAD FOTO DOKUMEN
 // Pakai Supabase Storage bucket: "dokumen"
+
+// ── TEMPLATE BERKAS KPR PER BANK ─────────────────
+const KPR_TEMPLATES = {
+  'kpr-btn': {
+    label: 'KPR BTN',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Surat Pemesanan Unit',
+    ]
+  },
+  'kpr-bni': {
+    label: 'KPR BNI',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Pas Foto 3x4 (2 lembar)',
+    ]
+  },
+  'kpr-bri': {
+    label: 'KPR BRI',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Surat Pemesanan Unit',
+    ]
+  },
+  'kpr-mandiri': {
+    label: 'KPR Mandiri',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja / SK Pengangkatan',
+      'Rekening Tabungan 3 Bulan',
+      'Surat Keterangan Belum Memiliki Rumah',
+    ]
+  },
+  'kpr-bsm': {
+    label: 'KPR BSM (Syariah)',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Surat Pemesanan Unit',
+    ]
+  },
+  'kpr-bsi': {
+    label: 'KPR BSI',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Pas Foto 3x4 (2 lembar)',
+    ]
+  },
+  'kpr-sumsel': {
+    label: 'KPR Bank Sumsel Babel',
+    items: [
+      'KTP Pemohon',
+      'KTP Pasangan',
+      'Kartu Keluarga',
+      'Buku Nikah / Akta Cerai',
+      'NPWP',
+      'Slip Gaji 3 Bulan Terakhir',
+      'Surat Keterangan Kerja',
+      'Rekening Tabungan 3 Bulan',
+      'Surat Pemesanan Unit',
+    ]
+  },
+};
+
+// Buka modal pilih template KPR (Business only)
+function openKPRTemplateModal(konsumenId, kprValue) {
+  if (typeof requirePro === 'function' && !requirePro('kpr_template')) return;
+
+  const template = KPR_TEMPLATES[kprValue];
+  if (!template) {
+    showToast('Template tidak tersedia untuk bank ini', '⚠️');
+    return;
+  }
+
+  if (!confirm(`Terapkan template checklist ${template.label}?\n\n${template.items.length} item akan ditambahkan:\n• ${template.items.slice(0,5).join('\n• ')}${template.items.length > 5 ? '\n• ...' : ''}\n\nItem yang sudah ada tidak akan dihapus.`)) return;
+
+  applyKPRTemplate(konsumenId, kprValue, template);
+}
+
+async function applyKPRTemplate(konsumenId, kprValue, template) {
+  const k = allKons.find(x => x.id === konsumenId);
+  if (!k) return;
+
+  const existing = normBerkas(k.berkas);
+  const existingLabels = existing.map(b => b.label.toLowerCase());
+
+  // Hanya tambah item yang belum ada
+  const newItems = template.items.filter(
+    item => !existingLabels.includes(item.toLowerCase())
+  );
+
+  if (newItems.length === 0) {
+    showToast('Semua item template sudah ada di checklist', '✅');
+    return;
+  }
+
+  // Tambah ke berkas
+  const berkasArr = [...existing];
+  newItems.forEach(label => {
+    const key = 'kpr_' + label.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_' + Date.now() % 10000;
+    berkasArr.push({ key, label, done: false });
+  });
+
+  setBtnLoading('btnApplyTemplate', true, 'Menerapkan...');
+  try {
+    const { error } = await sb.from('konsumen')
+      .update({ berkas: berkasArr, updated_at: new Date().toISOString() })
+      .eq('id', konsumenId);
+    if (error) throw error;
+
+    // Update local
+    const idx = allKons.findIndex(x => x.id === konsumenId);
+    if (idx >= 0) allKons[idx].berkas = berkasArr;
+
+    showToast(`${newItems.length} item template ${template.label} ditambahkan`, '✅');
+
+    // Refresh berkas section
+    setTimeout(() => refreshBerkasSection(konsumenId), 300);
+  } catch(e) {
+    showToast('Gagal: ' + e.message, '❌');
+  }
+}
+
 // Path: dokumen/{konsumen_id}/{berkas_key}/{filename}
 // ═══════════════════════════════════════════════
 
@@ -294,13 +456,24 @@ async function buildBerkasSection(k, canEdit) {
     list.map(bx => renderBerkasWithFoto(k.id, bx.key, bx.label, !!bx.done, canEdit))
   );
 
-  // Tombol tambah item baru
-  const addBtn = canEdit ? `
-    <div class="berkas-add-row">
-      <button class="berkas-add-btn" onclick="promptTambahBerkas('${k.id}')">
-        ＋ Tambah Item Berkas
-      </button>
-    </div>` : '';
+  // Tombol tambah item + template KPR (Business only)
+  let addBtn = '';
+  if (canEdit) {
+    const kprVal = k.kpr || '';
+    const hasTemplate = KPR_TEMPLATES[kprVal] && typeof isBusiness === 'function' && isBusiness();
+    const templateBtn = hasTemplate ? `
+      <button class="berkas-template-btn" id="btnApplyTemplate"
+        onclick="openKPRTemplateModal('${k.id}','${kprVal}')">
+        🏦 Template ${KPR_TEMPLATES[kprVal]?.label}
+      </button>` : '';
+    addBtn = `
+      <div class="berkas-add-row">
+        ${templateBtn}
+        <button class="berkas-add-btn" onclick="promptTambahBerkas('${k.id}')">
+          ＋ Tambah Item Berkas
+        </button>
+      </div>`;
+  }
 
   return berkasHtmls.join('') + addBtn;
 }

@@ -10,7 +10,6 @@
 **Aplikasi CRM web real-time untuk monitoring dan pengelolaan data konsumen properti.**
 Install di HP (PWA), multi-user, sinkronisasi real-time — lengkap dengan sistem monetisasi plan Gratis / Pro / Business.
 
-[🚀 **Coba Demo**](demo.html) · [📱 **Buka Aplikasi**](https://propmapdev.netlify.app/)
 [🚀 **Coba Demo**](https://propmapid.netlify.app/demo) · [📱 **Buka Aplikasi**](https://propmapid.netlify.app/)
 
 </div>
@@ -59,7 +58,6 @@ Install di HP (PWA), multi-user, sinkronisasi real-time — lengkap dengan siste
 | | Gratis | Pro | Business |
 |---|---|---|---|
 | **Harga** | Rp 0 | Rp 100.000/bln | Rp 299.000/bln |
-| **Pengguna** | Maks 3 | Maks 10 | Tidak terbatas |
 | **Konsumen** | Maks 20 | Tidak terbatas | Tidak terbatas |
 | **Trial** | — | 14 hari gratis | - |
 | Export Excel/PDF/CSV | ✕ | ✓ | ✓ |
@@ -70,6 +68,7 @@ Install di HP (PWA), multi-user, sinkronisasi real-time — lengkap dengan siste
 | Backup & restore | ✕ | ✓ (data sendiri) | ✓ (seluruh tim) |
 | Mode offline | ✕ | ✓ | ✓ |
 | Import Excel/CSV | ✕ | ✓ | ✓ |
+| Template Checklist berkas per bank | X | X | ✓
 
 > Semua user baru otomatis mendapat **trial Pro 14 hari gratis**.
 
@@ -322,6 +321,7 @@ A: Di Supabase Storage bucket `dokumen`. Bisa dilihat di Supabase Dashboard → 
 - [x] Modal upgrade + checkout pembayaran
 - [x] Salin nomor rekening & Order ID
 - [x] Panel aktivasi plan Admin
+- [x] Template checklist berkas KPR per bank (Business)
 - [ ] Integrasi payment gateway (Midtrans / Xendit)
 - [ ] Integrasi WhatsApp Business API
 - [ ] Template berkas KPR per bank
