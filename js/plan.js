@@ -123,7 +123,7 @@ const FEATURE_LABELS = {
   backup:           '💾 Backup & Restore',
   offline:          '📵 Mode Offline',
   import:           '📥 Import Excel/CSV',
-  limit_konsumen:   '👥 Tambah Konsumen (maks 50 di Gratis)',
+  limit_konsumen:   '👥 Tambah Konsumen (maks 20 di Gratis)',
 };
 
 function openUpgradeModal(feature) {
@@ -145,7 +145,7 @@ function openUpgradePage() {
 async function choosePlan(plan) {
   closeModal('modalUpgrade');
   // Tampilkan modal checkout
-  const prices = { pro: 149000, business: 299000 };
+  const prices = { pro: 100000, business: 299000 };
   const price  = prices[plan];
   const label  = PLANS[plan]?.name;
 
@@ -179,7 +179,7 @@ async function submitCheckout() {
       workspace_id: me.id,
       plan,
       status: 'pending',
-      amount: plan === 'pro' ? 149000 : 299000,
+      amount: plan === 'pro' ? 100000 : 299000,
       payment_ref: `ORDER-${Date.now()}`,
     });
     if (error) throw error;
@@ -190,7 +190,7 @@ async function submitCheckout() {
     document.getElementById('checkoutOrderId').textContent   = `ORDER-${Date.now()}`;
     document.getElementById('checkoutPlanDisplay').textContent = PLANS[plan]?.name;
     document.getElementById('checkoutPriceDisplay').textContent =
-      'Rp ' + (plan === 'pro' ? '149.000' : '299.000');
+      'Rp ' + (plan === 'pro' ? '100.000' : '299.000');
   } catch(e) {
     document.getElementById('checkoutErr').textContent = 'Gagal: ' + e.message;
   }
@@ -253,7 +253,7 @@ function renderPlanInfo() {
       <div class="plan-usage">
         <div class="plan-usage-row">
           <span>Konsumen</span>
-          <span><strong>${myKonsCount}</strong> / ${isPro() ? '∞' : PLANS.free.maxKons}</span>
+          <span><strong>${myKonsCount}</strong> / ${isPro() ? '∞' : PLANS.free.maxKons + ' (maks gratis)'}</span>
         </div>
         ${!isPro() ? `
         <div class="plan-usage-bar">
@@ -407,7 +407,7 @@ async function submitAktivasi() {
         workspace_id: userId,
         plan,
         status: 'active',
-        amount: plan === 'pro' ? 149000 : 299000,
+        amount: plan === 'pro' ? 100000 : 299000,
         payment_ref: `MANUAL-${Date.now()}`,
         started_at: new Date().toISOString(),
         expires_at: expires ? expires.toISOString() : null,

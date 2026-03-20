@@ -29,10 +29,10 @@ let allTarget = [];   // cache target_bulanan
 
 // ── PLAN CONFIG ───────────────────────────────────
 const PLANS = {
-  free:     { name: 'Gratis',   maxUsers: 3,   maxKons: 50,  storage: 0,    color: '#888780' },
-  trial:    { name: 'Pro Trial',maxUsers: 10,  maxKons: 9999,storage: 5120, color: '#6366f1' },
-  pro:      { name: 'Pro',      maxUsers: 10,  maxKons: 9999,storage: 5120, color: '#6366f1' },
-  business: { name: 'Business', maxUsers: 9999,maxKons: 9999,storage: 20480,color: '#10b981' },
+  free:     { name: 'Gratis',   maxUsers: 3,   maxKons: 20,  maxFoto: 0,    storage: 0,    color: '#888780' },
+  trial:    { name: 'Pro Trial',maxUsers: 10,  maxKons: 9999,maxFoto: 10,   storage: 5120, color: '#6366f1' },
+  pro:      { name: 'Pro',      maxUsers: 10,  maxKons: 9999,maxFoto: 10,   storage: 5120, color: '#6366f1' },
+  business: { name: 'Business', maxUsers: 9999,maxKons: 9999,maxFoto: 9999, storage: 20480,color: '#10b981' },
 };
 
 // Fitur yang hanya tersedia di Pro ke atas

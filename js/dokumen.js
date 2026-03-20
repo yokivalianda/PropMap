@@ -145,8 +145,33 @@ async function handleFotoUpload(konsumenId, berkasKey, input) {
   const files = Array.from(input.files);
   if (!files.length) return;
 
+  // Cek batas foto per berkas sesuai plan
+  const maxFoto = PLANS[myPlan]?.maxFoto ?? 0;
+  if (maxFoto === 0) {
+    // Plan gratis — tidak bisa upload sama sekali
+    requirePro('upload_foto');
+    input.value = '';
+    return;
+  }
+  // Hitung foto yang sudah ada di berkas ini
+  const existing = await listFotoBerkas(konsumenId, berkasKey);
+  const totalAfter = existing.length + files.length;
+  if (maxFoto < 9999 && totalAfter > maxFoto) {
+    const sisa = Math.max(0, maxFoto - existing.length);
+    if (sisa === 0) {
+      showToast(`Maks ${maxFoto} foto per berkas (plan ${PLANS[myPlan]?.name})`, '⚠️');
+      input.value = '';
+      return;
+    }
+    showToast(`Hanya ${sisa} foto lagi yang bisa ditambah (maks ${maxFoto})`, '⚠️');
+  }
+
+  const allowedFiles = maxFoto < 9999
+    ? files.slice(0, Math.max(0, maxFoto - existing.length))
+    : files;
+
   let uploaded = 0;
-  for (const file of files) {
+  for (const file of allowedFiles) {
     const path = await uploadFotoDokumen(konsumenId, berkasKey, file);
     if (path) uploaded++;
   }
