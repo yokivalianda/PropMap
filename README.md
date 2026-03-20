@@ -11,6 +11,7 @@
 Install di HP (PWA), multi-user, sinkronisasi real-time — lengkap dengan sistem monetisasi plan Gratis / Pro / Business.
 
 [🚀 **Coba Demo**](demo.html) · [📱 **Buka Aplikasi**](https://propmapdev.netlify.app/)
+[🚀 **Coba Demo**](https://propmapid.netlify.app/demo) · [📱 **Buka Aplikasi**](https://propmapid.netlify.app/)
 
 </div>
 
