@@ -320,6 +320,7 @@ A: Di Supabase Storage bucket `dokumen`. Bisa dilihat di Supabase Dashboard → 
 - [x] Modal upgrade + checkout pembayaran
 - [x] Salin nomor rekening & Order ID
 - [x] Panel aktivasi plan Admin
+- [x] Template checklist berkas KPR per bank (Business)
 - [ ] Integrasi payment gateway (Midtrans / Xendit)
 - [ ] Integrasi WhatsApp Business API
 - [ ] Template berkas KPR per bank

@@ -2064,3 +2064,21 @@ html.light #trialBanner { background: rgba(99,102,241,.07); }
   font-size: 13px; font-weight: 700; color: var(--text-1);
   font-family: var(--font-mono); letter-spacing: .5px;
 }
+
+/* ── Template KPR button ─────────────────────────── */
+.berkas-template-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--r-full);
+  background: rgba(16,185,129,.1);
+  border: 1px solid rgba(16,185,129,.25);
+  color: var(--emerald); font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: var(--font-body);
+  transition: all .15s;
+}
+.berkas-template-btn:hover {
+  background: var(--emerald); color: #fff;
+}
+.berkas-add-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 0 4px;
+}

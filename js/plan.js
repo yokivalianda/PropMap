@@ -33,6 +33,8 @@ async function loadPlan() {
 
 // ── CEK AKSES FITUR ───────────────────────────────
 function canUse(feature) {
+  // kpr_template khusus Business saja
+  if (feature === 'kpr_template') return myPlan === 'business';
   if (['pro','trial','business'].includes(myPlan)) return true;
   return !PRO_FEATURES.includes(feature);
 }
@@ -124,6 +126,7 @@ const FEATURE_LABELS = {
   export:           '📊 Export Excel / PDF / CSV',
   upload_foto:      '📎 Upload Foto Berkas',
   filter_bulan:     '📆 Filter Bulan',
+  kpr_template:     '🏦 Template Checklist KPR (Business)',
   filter_lanjutan:  '🔍 Filter Lanjutan',
   target:           '🎯 Target Penjualan',
   notifikasi_push:  '🔔 Notifikasi Push',
