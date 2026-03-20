@@ -65,7 +65,7 @@ async function afterLogin(user) {
   }
   myProf = prof;
   setLoadTxt('Memuat data...');
-  await Promise.all([loadProfs(), loadKons()]);
+  await Promise.all([loadProfs(), loadKonsWithFallback ? loadKonsWithFallback() : loadKons()]);
   setupRealtime();
   hideSplash(); hideAuth();
   const shell = document.getElementById('shell');
@@ -77,6 +77,7 @@ async function afterLogin(user) {
   renderDash(); renderKons();
   if (typeof renderMonthFilter === "function") renderMonthFilter();
   // Init push notification setelah login
+  if (typeof initOffline === 'function') initOffline();
   setTimeout(() => { if(typeof initPush === 'function') initPush(); }, 1000);
   setTimeout(() => { if(typeof checkAndSendPushReminders === 'function') checkAndSendPushReminders(); }, 2000);
   initTheme();
@@ -137,6 +138,10 @@ async function loadKons() {
   const { data } = await q;
   allKons = data || [];
   updateNotifPip();
+  // Cache ke IndexedDB untuk mode offline
+  if (typeof cacheKonsumen === 'function' && allKons.length > 0) {
+    cacheKonsumen(allKons).catch(() => {});
+  }
 }
 
 // ── REALTIME ─────────────────────────────────────
@@ -184,10 +189,51 @@ async function saveKons() {
     sumber:      document.getElementById('fSumber').value,
     catatan:     document.getElementById('fCatatan').value.trim(),
   };
+  // Cek mode offline
+  if (typeof saveKonsOffline === 'function') {
+    const obj2 = {
+      nama, hp,
+      unit:         document.getElementById('fUnit').value.trim(),
+      kavling:      document.getElementById('fKavling').value.trim(),
+      harga:        getRpValue('fHarga'),
+      dp:           getRpValue('fDP'),
+      status:       document.getElementById('fStatus').value,
+      tgl_booking:  document.getElementById('fTglBooking').value || null,
+      tgl_followup: document.getElementById('fTglFollowup').value || null,
+      kpr:          document.getElementById('fKPR').value,
+      sumber:       document.getElementById('fSumber').value,
+      catatan:      document.getElementById('fCatatan').value.trim(),
+    };
+    const handled = await saveKonsOffline(obj2, eid || null);
+    if (handled) { closeModal('modalAdd'); return; }
+  }
   setBtnLoading('btnSave', true, 'Menyimpan...');
   try {
     if (eid) {
       const ex = allKons.find(k => k.id === eid);
+
+      // ── OPTIMISTIC LOCKING ───────────────────────
+      // Bandingkan updated_at yang disimpan saat buka form vs yang ada di DB sekarang
+      const savedUpdatedAt = document.getElementById('editUpdatedAt')?.value || '';
+      if (savedUpdatedAt) {
+        const { data: fresh, error: fetchErr } = await sb
+          .from('konsumen').select('updated_at, nama, status, harga, dp, catatan')
+          .eq('id', eid).single();
+
+        if (!fetchErr && fresh) {
+          const dbTime   = new Date(fresh.updated_at).getTime();
+          const formTime = new Date(savedUpdatedAt).getTime();
+
+          if (dbTime > formTime) {
+            // KONFLIK — ada perubahan dari user lain sejak form dibuka
+            setBtnLoading('btnSave', false, 'Simpan Data');
+            showConflictModal(eid, ex, fresh, obj);
+            return;
+          }
+        }
+      }
+      // ── END OPTIMISTIC LOCKING ───────────────────
+
       obj.log = [...(ex?.log || [])];
       if (ex && ex.status !== obj.status) obj.log.push({ action: `Status: ${sLabel(ex.status)} → ${sLabel(obj.status)}`, time: new Date().toISOString(), note: '' });
       if (ex && ex.tgl_followup !== obj.tgl_followup && obj.tgl_followup) {
@@ -225,6 +271,103 @@ async function hapusKons() {
   } else {
     showToast('Gagal menghapus', '❌');
   }
+}
+
+// ── CONFLICT MODAL ───────────────────────────────
+function showConflictModal(id, localData, serverData, pendingObj) {
+  // Simpan pending obj untuk opsi force save
+  window._conflictPending = { id, pendingObj };
+
+  const diffRows = [];
+
+  const fields = [
+    { key: 'nama',    label: 'Nama' },
+    { key: 'status',  label: 'Status',  fmt: sLabel },
+    { key: 'harga',   label: 'Harga',   fmt: fRpFull },
+    { key: 'dp',      label: 'DP',      fmt: fRpFull },
+    { key: 'catatan', label: 'Catatan' },
+  ];
+
+  fields.forEach(f => {
+    const localVal  = localData?.[f.key];
+    const serverVal = serverData?.[f.key];
+    const pendingVal = pendingObj?.[f.key];
+    if (String(serverVal || '') !== String(localVal || '')) {
+      diffRows.push({ label: f.label, server: f.fmt ? f.fmt(serverVal) : (serverVal || '—'), yours: f.fmt ? f.fmt(pendingVal) : (pendingVal || '—') });
+    }
+  });
+
+  document.getElementById('conflictBody').innerHTML = `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.6">
+      <strong>${serverData.nama || localData?.nama}</strong> sudah diubah oleh pengguna lain
+      sejak Anda membuka form edit.
+    </div>
+    ${diffRows.length ? `
+    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Perbedaan yang terdeteksi</div>
+    <div class="conflict-table">
+      <div class="ct-header">
+        <span>Field</span><span>Di Database</span><span>Perubahan Anda</span>
+      </div>
+      ${diffRows.map(r => `
+        <div class="ct-row">
+          <span class="ct-field">${r.label}</span>
+          <span class="ct-server">${r.server}</span>
+          <span class="ct-yours">${r.yours}</span>
+        </div>`).join('')}
+    </div>` : '<div style="font-size:12px;color:var(--text-3)">Data berubah tapi tidak terdeteksi perbedaan di field utama.</div>'}
+    <div class="conflict-actions">
+      <button class="conflict-btn-reload" onclick="reloadAndDiscard('${id}')">
+        🔄 Pakai Data Terbaru
+        <span style="font-size:10px;color:var(--text-3);font-weight:400;display:block;margin-top:1px">Perubahan Anda dibatalkan</span>
+      </button>
+      <button class="conflict-btn-force" onclick="forceOverwrite()">
+        ⚡ Simpan Paksa
+        <span style="font-size:10px;color:var(--text-3);font-weight:400;display:block;margin-top:1px">Timpa perubahan terbaru</span>
+      </button>
+    </div>`;
+
+  openModal('modalConflict');
+}
+
+async function reloadAndDiscard(id) {
+  closeModal('modalConflict');
+  closeModal('modalAdd');
+  // Refresh data dari server
+  await loadKons();
+  renderKons(); renderDash();
+  // Buka ulang form dengan data terbaru
+  setTimeout(() => openEditModal(id), 300);
+  showToast('Form diperbarui dengan data terbaru', 'ℹ️');
+  window._conflictPending = null;
+}
+
+async function forceOverwrite() {
+  const { id, pendingObj } = window._conflictPending || {};
+  if (!id || !pendingObj) return;
+
+  closeModal('modalConflict');
+  setBtnLoading('btnSave', true, 'Menyimpan...');
+
+  try {
+    const ex = allKons.find(k => k.id === id);
+    pendingObj.log = [...(ex?.log || [])];
+    pendingObj.log.push({ action: 'Data ditimpa (force save)', time: new Date().toISOString(), note: '' });
+    if (ex && ex.status !== pendingObj.status) {
+      pendingObj.log.push({ action: `Status: ${sLabel(ex.status)} → ${sLabel(pendingObj.status)}`, time: new Date().toISOString(), note: '' });
+    }
+
+    // Update TANPA cek updated_at (force)
+    const { error } = await sb.from('konsumen').update(pendingObj).eq('id', id);
+    if (error) throw error;
+
+    closeModal('modalAdd');
+    showToast('Data berhasil disimpan (paksa)', '✅');
+  } catch(e) {
+    showToast('Gagal simpan paksa: ' + e.message, '❌');
+  }
+
+  setBtnLoading('btnSave', false, 'Simpan Data');
+  window._conflictPending = null;
 }
 
 async function toggleBerkas(id, key) {
@@ -378,6 +521,172 @@ function exportCSV() {
   a.download = `marketpro-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   showToast('Data diekspor ke CSV', '📤');
+}
+
+// ── EXPORT EXCEL XLSX ────────────────────────────
+function exportXLSX() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Memuat library Excel...', '⏳');
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = _doExportXLSX;
+    document.head.appendChild(s);
+    return;
+  }
+  _doExportXLSX();
+}
+
+function _doExportXLSX() {
+  try {
+    const wb    = XLSX.utils.book_new();
+    const k     = filterByPeriod(allKons, curPeriod);
+    const today = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+
+    // ── SHEET 1: Data Konsumen ────────────────────
+    const konsHeaders = [
+      'No','Nama Konsumen','No. HP','Unit','Kavling',
+      'Status','Harga (Rp)','DP (Rp)','Tgl Booking',
+      'Tgl Follow-up','KPR/Pembiayaan','Sumber Leads',
+      'Marketing','Berkas Lengkap','Catatan'
+    ];
+    const konsRows = k.map((c, i) => {
+      const bList = normBerkas(c.berkas || []);
+      const bOk   = bList.filter(b => b.done).length;
+      const bTot  = bList.length;
+      return [
+        i + 1,
+        c.nama || '',
+        c.hp || '',
+        c.unit || '',
+        c.kavling || '',
+        sLabel(c.status),
+        c.harga || 0,
+        c.dp || 0,
+        c.tgl_booking || '',
+        c.tgl_followup || '',
+        kprLabel(c.kpr),
+        sumberLabel(c.sumber),
+        ownerName(c.owner_id),
+        bTot > 0 ? `${bOk}/${bTot}` : '-',
+        c.catatan || ''
+      ];
+    });
+
+    const wsKons = XLSX.utils.aoa_to_sheet([konsHeaders, ...konsRows]);
+
+    // Lebar kolom
+    wsKons['!cols'] = [
+      {wch:4},{wch:24},{wch:16},{wch:10},{wch:8},
+      {wch:14},{wch:16},{wch:16},{wch:12},
+      {wch:12},{wch:18},{wch:14},
+      {wch:16},{wch:12},{wch:30}
+    ];
+
+    // Style header (bold + background)
+    const headerStyle = { font: { bold: true }, fill: { fgColor: { rgb: '6366F1' } }, font: { bold: true, color: { rgb: 'FFFFFF' } } };
+    konsHeaders.forEach((_, ci) => {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: ci });
+      if (wsKons[cellRef]) wsKons[cellRef].s = headerStyle;
+    });
+
+    XLSX.utils.book_append_sheet(wb, wsKons, 'Data Konsumen');
+
+    // ── SHEET 2: Ringkasan ────────────────────────
+    const statuses = [
+      { k: 'cek-lokasi', l: 'Prospek Konsumen' },
+      { k: 'booking',    l: 'Booking' },
+      { k: 'dp',         l: 'Proses DP' },
+      { k: 'berkas',     l: 'Kumpul Berkas' },
+      { k: 'acc',        l: 'SP3K/ACC' },
+      { k: 'selesai',    l: 'Selesai (Akad)' },
+      { k: 'batal',      l: 'Batal' },
+    ];
+    const totalSelesai = k.filter(x => x.status === 'selesai');
+    const totalNilai   = totalSelesai.reduce((s, x) => s + (x.harga || 0), 0);
+    const totalDP      = k.reduce((s, x) => s + (x.dp || 0), 0);
+
+    const ringkasanData = [
+      ['LAPORAN RINGKASAN MARKETPRO', ''],
+      ['Tanggal Export', today],
+      ['Periode', getPeriodLabel()],
+      ['', ''],
+      ['PIPELINE STATUS', 'Jumlah Konsumen'],
+      ...statuses.map(s => [s.l, k.filter(x => x.status === s.k).length]),
+      ['', ''],
+      ['TOTAL KONSUMEN (excl. Prospek)', k.filter(x => x.status !== 'cek-lokasi').length],
+      ['Akad Selesai', totalSelesai.length],
+      ['Total Nilai Jual (Rp)', totalNilai],
+      ['Total DP Masuk (Rp)', totalDP],
+    ];
+
+    // Sumber leads breakdown
+    ringkasanData.push(['', '']);
+    ringkasanData.push(['SUMBER LEADS', 'Jumlah']);
+    const sumberMap = {};
+    k.forEach(x => { const s = x.sumber || 'Lainnya'; sumberMap[s] = (sumberMap[s]||0)+1; });
+    Object.entries(sumberMap).sort((a,b)=>b[1]-a[1]).forEach(([s,n]) => {
+      ringkasanData.push([sumberLabel(s), n]);
+    });
+
+    // KPR breakdown
+    ringkasanData.push(['', '']);
+    ringkasanData.push(['JENIS PEMBIAYAAN', 'Jumlah']);
+    const kprMap = {};
+    k.forEach(x => { if (x.kpr) kprMap[x.kpr] = (kprMap[x.kpr]||0)+1; });
+    Object.entries(kprMap).sort((a,b)=>b[1]-a[1]).forEach(([k2,n]) => {
+      ringkasanData.push([kprLabel(k2), n]);
+    });
+
+    const wsRingkasan = XLSX.utils.aoa_to_sheet(ringkasanData);
+    wsRingkasan['!cols'] = [{wch:30},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, wsRingkasan, 'Ringkasan');
+
+    // ── SHEET 3: Per Marketing (admin only) ───────
+    if (myProf?.role === 'admin' && allProfs.length > 0) {
+      const mktg = allProfs.filter(p => p.role !== 'admin');
+      if (mktg.length > 0) {
+        const mktgHeaders = ['Marketing', 'Total Konsumen', 'Prospek', 'Booking', 'Proses DP', 'Berkas', 'SP3K/ACC', 'Selesai', 'Batal', 'Nilai Jual (Rp)', 'DP Masuk (Rp)'];
+        const mktgRows = mktg.map(p => {
+          const mk = k.filter(x => x.owner_id === p.id);
+          return [
+            p.full_name || p.email,
+            mk.filter(x => x.status !== 'cek-lokasi').length,
+            mk.filter(x => x.status === 'cek-lokasi').length,
+            mk.filter(x => x.status === 'booking').length,
+            mk.filter(x => x.status === 'dp').length,
+            mk.filter(x => x.status === 'berkas').length,
+            mk.filter(x => x.status === 'acc').length,
+            mk.filter(x => x.status === 'selesai').length,
+            mk.filter(x => x.status === 'batal').length,
+            mk.filter(x => x.status === 'selesai').reduce((s,x)=>s+(x.harga||0),0),
+            mk.reduce((s,x)=>s+(x.dp||0),0),
+          ];
+        });
+        const wsMktg = XLSX.utils.aoa_to_sheet([mktgHeaders, ...mktgRows]);
+        wsMktg['!cols'] = [{wch:20},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:18},{wch:16}];
+        XLSX.utils.book_append_sheet(wb, wsMktg, 'Per Marketing');
+      }
+    }
+
+    // Download
+    const fileName = `PropMap-Laporan-${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showToast('Laporan Excel berhasil diunduh', '📊');
+
+  } catch(e) {
+    console.error('exportXLSX:', e);
+    showToast('Gagal export Excel: ' + e.message, '❌');
+  }
+}
+
+function getPeriodLabel() {
+  if (curDateFrom || curDateTo) {
+    const from = curDateFrom ? new Date(curDateFrom).toLocaleDateString('id-ID') : '—';
+    const to   = curDateTo   ? new Date(curDateTo).toLocaleDateString('id-ID')   : '—';
+    return `${from} – ${to}`;
+  }
+  const labels = { bulan: 'Bulan Ini', kuartal: 'Kuartal Ini', tahun: 'Tahun Ini', semua: 'Semua Waktu' };
+  return labels[curPeriod] || 'Semua Waktu';
 }
 
 // ── EXPORT PDF via jsPDF ─────────────────────────

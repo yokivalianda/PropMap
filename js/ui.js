@@ -404,7 +404,7 @@ function cardHtml(k) {
   const bOk   = bList.filter(b => b.done).length;
   const bTot  = bList.length;
   const hasFollowup = k.tgl_followup && new Date(k.tgl_followup) >= new Date(new Date().toDateString());
-  return `<div class="kons-card st-${k.status}" onclick="openDetail('${k.id}')">
+  return `<div class="kons-card st-${k.status}" ${k._pending ? 'data-pending="true"' : ''} onclick="openDetail('${k.id}')">
     <div class="card-top">
       <div>
         <div class="card-name">${k.nama}</div>
@@ -513,6 +513,8 @@ function openEditModal(id) {
   const k = allKons.find(x => x.id === id); if (!k) return;
   document.getElementById('mAddTitle').textContent = 'Edit Konsumen';
   document.getElementById('editId').value = id;
+  // Simpan timestamp untuk optimistic locking
+  document.getElementById('editUpdatedAt').value = k.updated_at || '';
   document.getElementById('btnHapus').style.display = 'block';
   document.getElementById('fNama').value      = k.nama;
   document.getElementById('fHP').value        = k.hp;
