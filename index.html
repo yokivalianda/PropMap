@@ -160,6 +160,49 @@
         <button class="btn-primary" id="btnNewPass" onclick="doSetNewPassword()">Simpan Password Baru →</button>
       </div>
     </div>
+
+    <!-- Panel 4: Konfirmasi Email -->
+    <div id="authPanelVerify" style="display:none">
+      <div class="verify-wrap">
+        <div class="verify-icon-wrap">
+          <div class="verify-icon-ring">
+            <div class="verify-icon">📧</div>
+          </div>
+          <div class="verify-checkmark" id="verifyCheckmark" style="display:none">✓</div>
+        </div>
+        <div class="auth-heading" style="font-size:20px;margin-top:16px">Cek Email Anda</div>
+        <div class="auth-sub" style="margin-bottom:0">
+          Kami mengirim link konfirmasi ke
+        </div>
+        <div class="verify-email" id="verifyEmailDisplay"></div>
+        <div class="verify-steps">
+          <div class="vstep">
+            <div class="vstep-num">1</div>
+            <div class="vstep-text">Buka aplikasi Gmail / email Anda</div>
+          </div>
+          <div class="vstep">
+            <div class="vstep-num">2</div>
+            <div class="vstep-text">Cari email dari <strong>PropMap</strong> — cek juga folder <em>Spam</em></div>
+          </div>
+          <div class="vstep">
+            <div class="vstep-num">3</div>
+            <div class="vstep-text">Klik tombol <strong>Aktifkan Akun Saya</strong> di dalam email</div>
+          </div>
+          <div class="vstep">
+            <div class="vstep-num">4</div>
+            <div class="vstep-text">Kembali ke sini dan masuk dengan akun Anda</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="goToLoginAfterVerify()" style="width:100%;margin-top:8px">
+          Saya Sudah Konfirmasi → Masuk
+        </button>
+        <div style="margin-top:12px;text-align:center">
+          <button class="auth-link" onclick="resendVerifyEmail()">Kirim ulang email konfirmasi</button>
+        </div>
+        <div class="auth-success" id="resendOk" style="margin-top:8px">📧 Email konfirmasi dikirim ulang!</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
