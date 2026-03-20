@@ -6,9 +6,10 @@ function switchPage(p) {
   document.getElementById('tab-' + p).classList.add('on');
   curPage = p;
   document.getElementById('scrollArea').scrollTop = 0;
-  if (p === 'dashboard') renderDash();
-  if (p === 'laporan')   { renderLapKpi(); renderCharts(); }
-  if (p === 'kalender')  renderKalender();
+  if (p === 'dashboard')   renderDash();
+  if (p === 'laporan')     { renderLapKpi(); renderCharts(); }
+  if (p === 'kalender')    renderKalender();
+  if (p === 'pengaturan')  { if (typeof renderPlanInfo === 'function') renderPlanInfo(); }
 }
 
 // ── DASHBOARD ─────────────────────────────────────
