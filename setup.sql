@@ -283,6 +283,18 @@ CREATE POLICY "Admin lihat subscription workspace"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+-- User bisa insert order milik sendiri
+CREATE POLICY "User insert subscription sendiri"
+  ON subscriptions FOR INSERT
+  WITH CHECK (workspace_id = auth.uid());
+
+-- Admin bisa update semua subscription (approve/reject)
+CREATE POLICY "Admin update subscription"
+  ON subscriptions FOR UPDATE
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
 -- 3. Function: cek plan aktif user
 CREATE OR REPLACE FUNCTION get_active_plan(uid uuid)
 RETURNS text AS $$
