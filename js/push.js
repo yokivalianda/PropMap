@@ -1,9 +1,56 @@
 // ═══════════════════════════════════════════════
-// WEB PUSH NOTIFICATION — PropMap v4
+// WEB PUSH NOTIFICATION — MarketPro v4
 // Pendekatan: Notification API langsung via SW
 // ═══════════════════════════════════════════════
 
 let pushEnabled = false;
+
+// VAPID Public Key — harus sama dengan yang di Supabase Secrets
+// Generate di: https://vapidkeys.com atau jalankan: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'GANTI_DENGAN_VAPID_PUBLIC_KEY_ANDA';
+
+// Konversi VAPID key ke Uint8Array untuk PushManager
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// Simpan subscription ke Supabase
+async function savePushSubscription(subscription) {
+  if (!sb || !me) return;
+  const key  = subscription.getKey('p256dh');
+  const auth = subscription.getKey('auth');
+  if (!key || !auth) return;
+
+  const p256dh = btoa(String.fromCharCode(...new Uint8Array(key)))
+    .replace(/\+/g, '-').replace(/\//g, '_');
+  const authStr = btoa(String.fromCharCode(...new Uint8Array(auth)))
+    .replace(/\+/g, '-').replace(/\//g, '_');
+
+  try {
+    await sb.from('push_subscriptions').upsert({
+      user_id:  me.id,
+      endpoint: subscription.endpoint,
+      p256dh,
+      auth: authStr,
+    }, { onConflict: 'user_id' });
+    console.log('Push subscription saved to DB');
+  } catch(e) {
+    console.warn('Save push subscription failed:', e.message);
+  }
+}
+
+// Hapus subscription dari DB saat nonaktif
+async function removePushSubscription() {
+  if (!sb || !me) return;
+  try {
+    await sb.from('push_subscriptions').delete().eq('user_id', me.id);
+  } catch(e) {
+    console.warn('Remove push subscription failed:', e.message);
+  }
+}
 
 // ── INIT ─────────────────────────────────────────
 async function initPush() {
@@ -53,14 +100,44 @@ async function enablePushNotification() {
   updatePushUI(true, 'granted');
   showToast('Notifikasi diaktifkan!', '🔔');
 
+  // Subscribe ke PushManager untuk push dari server
+  try {
+    if ('serviceWorker' in navigator && VAPID_PUBLIC_KEY !== 'GANTI_DENGAN_VAPID_PUBLIC_KEY_ANDA') {
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+      await savePushSubscription(sub);
+    }
+  } catch(e) {
+    console.warn('PushManager subscribe failed:', e.message);
+    // Tetap aktifkan notifikasi lokal meski server push gagal
+  }
+
   // Kirim notifikasi test langsung
   showNotif('🎉 PropMap — Notifikasi Aktif', 'Anda akan menerima reminder follow-up, berkas, dan DP secara otomatis.');
 }
 
-function disablePushNotification() {
+async function disablePushNotification() {
   pushEnabled = false;
   updatePushUI(false, 'granted');
   showToast('Notifikasi dinonaktifkan', '🔕');
+
+  // Unsubscribe dari PushManager dan hapus dari DB
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    }
+    await removePushSubscription();
+  } catch(e) {
+    console.warn('Unsubscribe failed:', e.message);
+  }
 }
 
 // ── SHOW NOTIFICATION ─────────────────────────────
