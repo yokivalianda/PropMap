@@ -15,8 +15,9 @@ function fRp(n) {
   return 'Rp ' + Number(n).toLocaleString('id-ID');
 }
 function fRpFull(n) {
+  if (!n && n !== 0) return '—';
   if (!n) return 'Rp 0';
-  return 'Rp ' + Number(n).toLocaleString('id-ID');
+  return 'Rp ' + Number(n).toLocaleString('id-ID', { minimumFractionDigits: 0 });
 }
 function fDate(iso) {
   if (!iso) return '—';
@@ -61,6 +62,41 @@ function showToast(msg, ico = '') {
 // ── MODAL ────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── CUSTOM CONFIRM & PROMPT (ganti native confirm/prompt) ──────
+function showConfirm(message, title = 'Konfirmasi', okText = 'Ya, Lanjutkan', dangerOk = false) {
+  return new Promise(resolve => {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').innerHTML     = message.replace(/\n/g, '<br>');
+    const btnOk = document.getElementById('btnConfirmOk');
+    const btnNo = document.getElementById('btnConfirmNo');
+    btnOk.textContent = okText;
+    btnOk.className   = dangerOk ? 'btn-danger' : 'btn-primary';
+    btnOk.onclick = () => { closeModal('modalConfirm'); resolve(true);  };
+    btnNo.onclick = () => { closeModal('modalConfirm'); resolve(false); };
+    openModal('modalConfirm');
+  });
+}
+
+function showPrompt(label, defaultVal = '', title = 'Isi Kolom') {
+  return new Promise(resolve => {
+    document.getElementById('promptTitle').textContent = title;
+    document.getElementById('promptLabel').textContent = label;
+    const inp = document.getElementById('promptInput');
+    inp.value = defaultVal;
+    const btnOk = document.getElementById('btnPromptOk');
+    const btnNo = document.getElementById('btnPromptNo');
+    btnOk.onclick = () => { const v = inp.value.trim(); closeModal('modalPrompt'); resolve(v || null); };
+    btnNo.onclick = () => { closeModal('modalPrompt'); resolve(null); };
+    inp.onkeydown = e => {
+      if (e.key === 'Enter')  { const v = inp.value.trim(); closeModal('modalPrompt'); resolve(v || null); }
+      if (e.key === 'Escape') { closeModal('modalPrompt'); resolve(null); }
+    };
+    openModal('modalPrompt');
+    setTimeout(() => inp.focus(), 80);
+  });
+}
+
 
 // ── LOADING TEXT ─────────────────────────────────
 function setLoadTxt(t) { document.getElementById('loadTxt').textContent = t; }
@@ -226,7 +262,7 @@ function _doDownloadTemplate() {
 
   // Info sheet
   const infoData = [
-    ['PANDUAN PENGISIAN TEMPLATE MarketPro'],
+    ['PANDUAN PENGISIAN TEMPLATE PropMap'],
     [''],
     ['Kolom','Keterangan','Contoh Nilai'],
     ['Nama Lengkap','Wajib diisi','Budi Santoso'],
@@ -247,7 +283,7 @@ function _doDownloadTemplate() {
 
   XLSX.utils.book_append_sheet(wb, ws, 'Data Konsumen');
   XLSX.utils.book_append_sheet(wb, wsInfo, 'Panduan');
-  XLSX.writeFile(wb, 'template-import-marketpro.xlsx');
+  XLSX.writeFile(wb, 'template-import-propmap.xlsx');
   showToast('Template berhasil diunduh', '📥');
 }
 

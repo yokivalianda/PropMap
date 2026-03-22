@@ -105,7 +105,7 @@ const KPR_TEMPLATES = {
 };
 
 // Buka modal pilih template KPR (Business only)
-function openKPRTemplateModal(konsumenId, kprValue) {
+async function openKPRTemplateModal(konsumenId, kprValue) {
   if (typeof requirePro === 'function' && !requirePro('kpr_template')) return;
 
   const template = KPR_TEMPLATES[kprValue];
@@ -289,10 +289,10 @@ async function renderBerkasWithFoto(konsumenId, berkasKey, berkasLabel, isDone, 
 }
 
 // ── PROMPT EDIT LABEL ─────────────────────────────
-function promptEditBerkas(konsumenId, key, currentLabel) {
-  const newLabel = prompt('Ubah nama berkas:', currentLabel);
-  if (newLabel && newLabel.trim() && newLabel.trim() !== currentLabel) {
-    editBerkas(konsumenId, key, newLabel.trim());
+async function promptEditBerkas(konsumenId, key, currentLabel) {
+  const newLabel = await showPrompt('Nama baru untuk berkas ini:', currentLabel, '\u270f\ufe0f Ubah Nama Berkas');
+  if (newLabel && newLabel !== currentLabel) {
+    editBerkas(konsumenId, key, newLabel);
   }
 }
 
@@ -408,9 +408,10 @@ function viewerNext() { if (_viewerIndex < _viewerFotos.length - 1) { _viewerInd
 async function viewerDelete() {
   const foto = _viewerFotos[_viewerIndex];
   if (!foto) return;
-  if (!confirm(`Hapus foto "${foto.name}"?`)) return;
-  const ok = await hapusFoto(foto.path);
-  if (ok) {
+  const ok = await showConfirm(`Hapus foto "${foto.name}"?\nTindakan ini tidak dapat dibatalkan.`, '\ud83d\uddd1\ufe0f Hapus Foto', 'Ya, Hapus', true);
+  if (!ok) return;
+  const done = await hapusFoto(foto.path);
+  if (done) {
     _viewerFotos.splice(_viewerIndex, 1);
     if (!_viewerFotos.length) {
       closeModal('modalFotoViewer');
@@ -479,7 +480,7 @@ async function buildBerkasSection(k, canEdit) {
 }
 
 // ── PROMPT TAMBAH BERKAS ──────────────────────────
-function promptTambahBerkas(konsumenId) {
-  const label = prompt('Nama item berkas baru:');
-  if (label && label.trim()) tambahBerkas(konsumenId, label.trim());
+async function promptTambahBerkas(konsumenId) {
+  const label = await showPrompt('Nama item berkas baru:', '', '\u002b Tambah Berkas');
+  if (label) tambahBerkas(konsumenId, label);
 }

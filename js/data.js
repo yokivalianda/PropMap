@@ -197,20 +197,7 @@ async function saveKons() {
   };
   // Cek mode offline
   if (typeof saveKonsOffline === 'function') {
-    const obj2 = {
-      nama, hp,
-      unit:         document.getElementById('fUnit').value.trim(),
-      kavling:      document.getElementById('fKavling').value.trim(),
-      harga:        getRpValue('fHarga'),
-      dp:           getRpValue('fDP'),
-      status:       document.getElementById('fStatus').value,
-      tgl_booking:  document.getElementById('fTglBooking').value || null,
-      tgl_followup: document.getElementById('fTglFollowup').value || null,
-      kpr:          document.getElementById('fKPR').value,
-      sumber:       document.getElementById('fSumber').value,
-      catatan:      document.getElementById('fCatatan').value.trim(),
-    };
-    const handled = await saveKonsOffline(obj2, eid || null);
+    const handled = await saveKonsOffline(obj, eid || null);
     if (handled) { closeModal('modalAdd'); return; }
   }
   setBtnLoading('btnSave', true, 'Menyimpan...');
@@ -270,11 +257,15 @@ async function saveKons() {
 }
 
 async function hapusKons() {
-  if (!confirm('Yakin hapus konsumen ini?')) return;
-  const id = document.getElementById('editId').value;
-  const { error } = await sb.from('konsumen').delete().eq('id', id);
+  const eid = document.getElementById('editId')?.value;
+  if (!eid) return;
+  const k = allKons.find(x => x.id === eid);
+  const nama = k?.nama || 'konsumen ini';
+  const ok = await showConfirm(`Hapus data <strong>${nama}</strong>?<br><br>Semua data termasuk berkas dan log akan dihilangkan permanen.`, '🗑️ Hapus Konsumen', 'Ya, Hapus', true);
+  if (!ok) return;
+  const { error } = await sb.from('konsumen').delete().eq('id', eid);
   if (!error) {
-    allKons = allKons.filter(k => k.id !== id);
+    allKons = allKons.filter(k => k.id !== eid);
     closeModal('modalAdd');
     closeModal('modalDetail');
     renderKons();
@@ -458,15 +449,16 @@ async function editBerkas(id, key, newLabel) {
 }
 
 // ── HAPUS ITEM BERKAS ─────────────────────────────
-async function hapusBerkasItem(id, key) {
-  const k = allKons.find(x => x.id === id); if (!k) return;
-  const item = normBerkas(k.berkas).find(b => b.key === key);
-  if (!confirm(`Hapus item berkas "${item?.label || key}"?`)) return;
+async function hapusBerkasItem(konsumenId, key) {
+  const k = allKons.find(x => x.id === konsumenId);
+  const item = normBerkas(k?.berkas).find(b => b.key === key);
+  const ok = await showConfirm(`Hapus item berkas <strong>"${item?.label || key}"</strong>?`, '🗑️ Hapus Berkas', 'Ya, Hapus', true);
+  if (!ok) return;
   const berkas = normBerkas(k.berkas).filter(b => b.key !== key);
   const log = [...(k.log||[]), { action: `Berkas dihapus: ${item?.label || key}`, time: new Date().toISOString(), note: '' }];
-  const { error } = await sb.from('konsumen').update({ berkas, log }).eq('id', id);
+  const { error } = await sb.from('konsumen').update({ berkas, log }).eq('id', konsumenId);
   if (!error) {
-    const i = allKons.findIndex(x => x.id === id);
+    const i = allKons.findIndex(x => x.id === konsumenId);
     if (i >= 0) allKons[i] = { ...allKons[i], berkas, log };
     showToast(`"${item?.label}" dihapus`, '🗑️');
   } else {
@@ -476,7 +468,8 @@ async function hapusBerkasItem(id, key) {
 }
 
 async function addLog(id) {
-  const note = prompt('Tambah catatan:'); if (!note) return;
+  const note = await showPrompt('Tambah catatan aktivitas:', '', '📝 Tambah Catatan');
+  if (!note) return;
   const k = allKons.find(x => x.id === id); if (!k) return;
   const log = [...(k.log || []), { action: 'Catatan ditambahkan', time: new Date().toISOString(), note }];
   await sb.from('konsumen').update({ log }).eq('id', id);
@@ -532,7 +525,7 @@ function exportCSV() {
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `marketpro-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `propmap-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   showToast('Data diekspor ke CSV', '📤');
 }
@@ -621,7 +614,7 @@ function _doExportXLSX() {
     const totalDP      = k.reduce((s, x) => s + (x.dp || 0), 0);
 
     const ringkasanData = [
-      ['LAPORAN RINGKASAN MARKETPRO', ''],
+      ['LAPORAN RINGKASAN PROPMAP', ''],
       ['Tanggal Export', today],
       ['Periode', getPeriodLabel()],
       ['', ''],
@@ -730,7 +723,7 @@ function _doExportPDF() {
   doc.rect(0, 0, 210, 28, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18); doc.setFont(undefined, 'bold');
-  doc.text('MarketPro — Laporan Penjualan', 14, 12);
+  doc.text('PropMap — Laporan Penjualan', 14, 12);
   doc.setFontSize(9); doc.setFont(undefined, 'normal');
   doc.text(`Dicetak: ${fDate(now.toISOString())}  |  User: ${myProf?.full_name || me.email}`, 14, 20);
   doc.text(`Periode: ${curPeriod === 'bulan' ? 'Bulan Ini' : curPeriod === 'kuartal' ? 'Kuartal Ini' : curPeriod === 'tahun' ? 'Tahun Ini' : 'Semua'}`, 14, 25);
@@ -808,7 +801,7 @@ function _doExportPDF() {
     doc.text(`... dan ${k.length - 60} konsumen lainnya`, 14, y + 4);
   }
 
-  doc.save(`marketpro-laporan-${now.toISOString().slice(0,10)}.pdf`);
+  doc.save(`propmap-laporan-${now.toISOString().slice(0,10)}.pdf`);
   showToast('Laporan PDF berhasil diunduh', '📄');
 }
 

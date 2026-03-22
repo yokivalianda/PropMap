@@ -213,6 +213,30 @@ async function submitCheckout() {
   setBtnLoading('btnCheckout', false, 'Lanjut Pembayaran →');
 }
 
+// ── COPY TO CLIPBOARD ─────────────────────────────
+function copyRekening(noRek, btn) {
+  navigator.clipboard.writeText(noRek).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Disalin!';
+    btn.style.color = 'var(--emerald)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+    showToast('Nomor rekening disalin', '📋');
+  }).catch(() => showToast('Gagal menyalin — salin manual', '⚠️'));
+}
+
+function copyOrderId(btn) {
+  const el = document.getElementById('cpiOrderId') || document.getElementById('checkoutOrderId');
+  const text = el?.textContent?.trim();
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Disalin!';
+    btn.style.color = 'var(--emerald)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+    showToast('Order ID disalin', '📋');
+  }).catch(() => showToast('Gagal menyalin — salin manual', '⚠️'));
+}
+
 // ── AKTIVASI MANUAL OLEH ADMIN (setelah konfirmasi bayar) ─
 async function activatePlan(userId, plan, months) {
   if (myProf?.role !== 'admin') return;
@@ -396,7 +420,8 @@ async function loadPendingOrders() {
 }
 
 async function approveOrder(orderId, userId, plan) {
-  if (!confirm(`Aktifkan plan ${PLANS[plan]?.name} untuk user ini?`)) return;
+  const ok = await showConfirm(`Aktifkan plan <strong>${PLANS[plan]?.name}</strong> untuk user ini?`, '✅ Aktifkan Plan', 'Ya, Aktifkan', false);
+  if (!ok) return;
   try {
     // Aktivasi plan 1 bulan
     await activatePlan(userId, plan, 1);
@@ -410,7 +435,8 @@ async function approveOrder(orderId, userId, plan) {
 }
 
 async function rejectOrder(orderId) {
-  if (!confirm('Tolak order ini?')) return;
+  const ok = await showConfirm('Tolak dan batalkan order ini?', '✕ Tolak Order', 'Ya, Tolak', true);
+  if (!ok) return;
   await sb.from('subscriptions').update({ status: 'cancelled' }).eq('id', orderId);
   showToast('Order ditolak', '🗑️');
   await loadPendingOrders();
