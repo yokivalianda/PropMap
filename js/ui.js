@@ -551,8 +551,9 @@ function buildReminders() {
       if (d >= 7) r.push({ ico: '⏰', txt: `${k.nama} — Booking ${d} hari lalu, follow up!`, col: 'var(--amber)' });
     }
     if (k.status === 'berkas') {
-      const m = k.berkas ? Object.values(k.berkas).filter(v => !v).length : 6;
-      if (m > 0) r.push({ ico: '📁', txt: `${k.nama} — ${m} berkas belum`, col: 'var(--violet)' });
+      const bList = normBerkas(k.berkas);
+      const m = bList.length > 0 ? bList.filter(b => !b.done).length : 0;
+      if (m > 0) r.push({ ico: '📁', txt: `${k.nama} — ${m} berkas belum lengkap`, col: 'var(--violet)' });
     }
     if (k.status === 'dp') r.push({ ico: '💰', txt: `${k.nama} — Proses DP belum selesai`, col: 'var(--brand-light)' });
   });

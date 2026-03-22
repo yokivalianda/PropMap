@@ -197,20 +197,7 @@ async function saveKons() {
   };
   // Cek mode offline
   if (typeof saveKonsOffline === 'function') {
-    const obj2 = {
-      nama, hp,
-      unit:         document.getElementById('fUnit').value.trim(),
-      kavling:      document.getElementById('fKavling').value.trim(),
-      harga:        getRpValue('fHarga'),
-      dp:           getRpValue('fDP'),
-      status:       document.getElementById('fStatus').value,
-      tgl_booking:  document.getElementById('fTglBooking').value || null,
-      tgl_followup: document.getElementById('fTglFollowup').value || null,
-      kpr:          document.getElementById('fKPR').value,
-      sumber:       document.getElementById('fSumber').value,
-      catatan:      document.getElementById('fCatatan').value.trim(),
-    };
-    const handled = await saveKonsOffline(obj2, eid || null);
+    const handled = await saveKonsOffline(obj, eid || null);
     if (handled) { closeModal('modalAdd'); return; }
   }
   setBtnLoading('btnSave', true, 'Menyimpan...');
@@ -730,7 +717,7 @@ function _doExportPDF() {
   doc.rect(0, 0, 210, 28, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18); doc.setFont(undefined, 'bold');
-  doc.text('MarketPro — Laporan Penjualan', 14, 12);
+  doc.text('PropMap — Laporan Penjualan', 14, 12);
   doc.setFontSize(9); doc.setFont(undefined, 'normal');
   doc.text(`Dicetak: ${fDate(now.toISOString())}  |  User: ${myProf?.full_name || me.email}`, 14, 20);
   doc.text(`Periode: ${curPeriod === 'bulan' ? 'Bulan Ini' : curPeriod === 'kuartal' ? 'Kuartal Ini' : curPeriod === 'tahun' ? 'Tahun Ini' : 'Semua'}`, 14, 25);

@@ -15,8 +15,9 @@ function fRp(n) {
   return 'Rp ' + Number(n).toLocaleString('id-ID');
 }
 function fRpFull(n) {
+  if (!n && n !== 0) return '—';
   if (!n) return 'Rp 0';
-  return 'Rp ' + Number(n).toLocaleString('id-ID');
+  return 'Rp ' + Number(n).toLocaleString('id-ID', { minimumFractionDigits: 0 });
 }
 function fDate(iso) {
   if (!iso) return '—';
@@ -226,7 +227,7 @@ function _doDownloadTemplate() {
 
   // Info sheet
   const infoData = [
-    ['PANDUAN PENGISIAN TEMPLATE MarketPro'],
+    ['PANDUAN PENGISIAN TEMPLATE PropMap'],
     [''],
     ['Kolom','Keterangan','Contoh Nilai'],
     ['Nama Lengkap','Wajib diisi','Budi Santoso'],
@@ -247,7 +248,7 @@ function _doDownloadTemplate() {
 
   XLSX.utils.book_append_sheet(wb, ws, 'Data Konsumen');
   XLSX.utils.book_append_sheet(wb, wsInfo, 'Panduan');
-  XLSX.writeFile(wb, 'template-import-marketpro.xlsx');
+  XLSX.writeFile(wb, 'template-import-propmap.xlsx');
   showToast('Template berhasil diunduh', '📥');
 }
 

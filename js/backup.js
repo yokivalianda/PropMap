@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════
-// BACKUP & RESTORE — MarketPro v4.2
+// BACKUP & RESTORE — PropMap v4.2
 // Format: JSON terenkripsi ringan dengan checksum
 // ═══════════════════════════════════════════════
 
