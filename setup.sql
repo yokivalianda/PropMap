@@ -371,3 +371,6 @@ CREATE POLICY "Admin update subscription"
       SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- Tambah kolom device_name ke push_subscriptions (untuk yang sudah install sebelumnya)
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS device_name text;
