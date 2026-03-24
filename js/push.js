@@ -7,7 +7,7 @@ let pushEnabled = false;
 
 // VAPID Public Key — harus sama dengan yang di Supabase Secrets
 // Generate di: https://vapidkeys.com atau jalankan: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BHCSu2sdmkDMc6uoULKu22FwdjiLwTqOHd4gzdLXrdl9uAPRJKnuL5kfA7rK9-cZybu-4uErX307r5C0urp4qd0';
+const VAPID_PUBLIC_KEY = 'BOvFp7f2wYwyBrih2O4aP7nQvj08L96HIkkSgBT7ZSQjns4sLOlly2bCM5dkan7gB5sqhuiFiPjirrr9Zi_DK0g';
 
 // Konversi VAPID key ke Uint8Array untuk PushManager
 function urlBase64ToUint8Array(base64String) {
@@ -102,7 +102,7 @@ async function enablePushNotification() {
 
   // Subscribe ke PushManager untuk push dari server
   try {
-    if ('serviceWorker' in navigator && VAPID_PUBLIC_KEY !== 'GANTI_DENGAN_VAPID_PUBLIC_KEY_ANDA') {
+    if ('serviceWorker' in navigator && VAPID_PUBLIC_KEY !== 'BOvFp7f2wYwyBrih2O4aP7nQvj08L96HIkkSgBT7ZSQjns4sLOlly2bCM5dkan7gB5sqhuiFiPjirrr9Zi_DK0g') {
       const reg = await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
