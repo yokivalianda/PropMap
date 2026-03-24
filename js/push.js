@@ -1,9 +1,112 @@
 // ═══════════════════════════════════════════════
-// WEB PUSH NOTIFICATION — PropMap v4
+// WEB PUSH NOTIFICATION — MarketPro v4
 // Pendekatan: Notification API langsung via SW
 // ═══════════════════════════════════════════════
 
 let pushEnabled = false;
+
+// VAPID Public Key — harus sama dengan yang di Supabase Secrets
+// Generate di: https://vapidkeys.com atau jalankan: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'BOvFp7f2wYwyBrih2O4aP7nQvj08L96HIkkSgBT7ZSQjns4sLOlly2bCM5dkan7gB5sqhuiFiPjirrr9Zi_DK0g';
+
+// Konversi VAPID key ke Uint8Array untuk PushManager
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+// Simpan subscription ke Supabase
+// Deteksi nama device dari user agent
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  let os = 'Desktop';
+  if (/android/i.test(ua))       os = 'Android';
+  else if (/iphone/i.test(ua))   os = 'iPhone';
+  else if (/ipad/i.test(ua))     os = 'iPad';
+  else if (/windows/i.test(ua))  os = 'Windows';
+  else if (/mac/i.test(ua))      os = 'Mac';
+  else if (/linux/i.test(ua))    os = 'Linux';
+
+  let browser = 'Browser';
+  if (/edg/i.test(ua))           browser = 'Edge';
+  else if (/chrome/i.test(ua))   browser = 'Chrome';
+  else if (/firefox/i.test(ua))  browser = 'Firefox';
+  else if (/safari/i.test(ua))   browser = 'Safari';
+  else if (/brave/i.test(ua))    browser = 'Brave';
+
+  return `${os} · ${browser}`;
+}
+
+async function savePushSubscription(subscription) {
+  if (!sb || !me) return;
+  const key  = subscription.getKey('p256dh');
+  const auth = subscription.getKey('auth');
+  if (!key || !auth) return;
+
+  const p256dh = btoa(String.fromCharCode(...new Uint8Array(key)))
+    .replace(/\+/g, '-').replace(/\//g, '_');
+  const authStr = btoa(String.fromCharCode(...new Uint8Array(auth)))
+    .replace(/\+/g, '-').replace(/\//g, '_');
+  const deviceName = getDeviceName();
+
+  try {
+    await sb.from('push_subscriptions').upsert({
+      user_id:     me.id,
+      endpoint:    subscription.endpoint,
+      p256dh,
+      auth:        authStr,
+      device_name: deviceName,
+    }, { onConflict: 'user_id' });
+    console.log('Push subscription saved:', deviceName);
+    renderPushDeviceList();
+  } catch(e) {
+    console.warn('Save push subscription failed:', e.message);
+  }
+}
+
+// Hapus subscription dari DB saat nonaktif
+async function removePushSubscription() {
+  if (!sb || !me) return;
+  try {
+    await sb.from('push_subscriptions').delete().eq('user_id', me.id);
+    renderPushDeviceList();
+  } catch(e) {
+    console.warn('Remove push subscription failed:', e.message);
+  }
+}
+
+// Tampilkan daftar device terdaftar di UI pengaturan
+async function renderPushDeviceList() {
+  const el = document.getElementById('pushDeviceList');
+  if (!el || !sb || !me) return;
+  try {
+    const { data } = await sb.from('push_subscriptions')
+      .select('device_name, created_at')
+      .eq('user_id', me.id);
+    if (!data?.length) {
+      el.textContent = 'Belum ada device terdaftar';
+      return;
+    }
+    el.innerHTML = data.map(d => {
+      const nama   = d.device_name || 'Device tidak diketahui';
+      const tgl    = d.created_at
+        ? new Date(d.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+        : '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--glass-border)">
+        <span style="font-size:16px">📱</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-1)">${nama}</div>
+          ${tgl ? `<div style="font-size:11px;color:var(--text-4)">Terdaftar ${tgl}</div>` : ''}
+        </div>
+        <span style="margin-left:auto;font-size:10px;background:rgba(16,185,129,.12);color:var(--emerald);padding:2px 8px;border-radius:20px;font-weight:700">Aktif</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.textContent = 'Gagal memuat device';
+  }
+}
 
 // ── INIT ─────────────────────────────────────────
 async function initPush() {
@@ -16,6 +119,7 @@ async function initPush() {
   if (perm === 'granted') {
     pushEnabled = true;
     updatePushUI(true, 'granted');
+    renderPushDeviceList();
   } else {
     updatePushUI(false, 'default');
   }
@@ -53,14 +157,44 @@ async function enablePushNotification() {
   updatePushUI(true, 'granted');
   showToast('Notifikasi diaktifkan!', '🔔');
 
+  // Subscribe ke PushManager untuk push dari server
+  try {
+    if ('serviceWorker' in navigator && VAPID_PUBLIC_KEY !== 'GANTI_DENGAN_VAPID_PUBLIC_KEY_ANDA') {
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+      await savePushSubscription(sub);
+    }
+  } catch(e) {
+    console.warn('PushManager subscribe failed:', e.message);
+    // Tetap aktifkan notifikasi lokal meski server push gagal
+  }
+
   // Kirim notifikasi test langsung
   showNotif('🎉 PropMap — Notifikasi Aktif', 'Anda akan menerima reminder follow-up, berkas, dan DP secara otomatis.');
 }
 
-function disablePushNotification() {
+async function disablePushNotification() {
   pushEnabled = false;
   updatePushUI(false, 'granted');
   showToast('Notifikasi dinonaktifkan', '🔕');
+
+  // Unsubscribe dari PushManager dan hapus dari DB
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    }
+    await removePushSubscription();
+  } catch(e) {
+    console.warn('Unsubscribe failed:', e.message);
+  }
 }
 
 // ── SHOW NOTIFICATION ─────────────────────────────
