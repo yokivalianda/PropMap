@@ -86,13 +86,31 @@ self.addEventListener('fetch', e => {
 
 // ── PUSH ─────────────────────────────────────────
 self.addEventListener('push', e => {
-  let d = {};
-  try { d = e.data?.json() || {}; } catch { d = { title: e.data?.text() || 'PropMap' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'PropMap', {
-    body: d.body || '', icon: d.icon || '/manifest.json',
-    badge: '/manifest.json', tag: d.tag || 'mp-' + Date.now(),
-    data: d.data || {}, vibrate: [200, 100, 200],
-  }));
+  let d = { title: 'PropMap', body: 'Ada notifikasi baru' };
+  try {
+    if (e.data) {
+      const text = e.data.text();
+      try { d = JSON.parse(text); } catch { d.body = text; }
+    }
+  } catch(err) { console.warn('Push parse error:', err); }
+
+  const options = {
+    body:    d.body    || '',
+    icon:    d.icon    || '/icons/icon-192.png',
+    badge:   d.badge   || '/icons/icon-72.png',
+    tag:     d.tag     || 'propmap-' + Date.now(),
+    data:    d.data    || {},
+    vibrate: [200, 100, 200],
+    requireInteraction: false,
+    actions: d.data?.konsumenId ? [
+      { action: 'open', title: 'Lihat Detail' },
+      { action: 'dismiss', title: 'Tutup' },
+    ] : [],
+  };
+
+  e.waitUntil(
+    self.registration.showNotification(d.title || 'PropMap', options)
+  );
 });
 
 // ── NOTIFICATION CLICK ────────────────────────────

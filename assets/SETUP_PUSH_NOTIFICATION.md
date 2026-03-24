@@ -1,85 +1,65 @@
 # Setup Push Notification Server — PropMap
 
 Push notification PropMap menggunakan **Supabase Edge Functions** + **Web Push VAPID**.
-Setelah setup ini, user akan menerima notifikasi meski browser/app ditutup.
+Setelah setup ini, notifikasi masuk ke HP meski browser/app ditutup.
 
 ---
 
 ## LANGKAH 1 — Generate VAPID Keys
 
-Jalankan perintah ini di terminal (butuh Node.js):
+Buka browser → **https://vapidkeys.com** → klik **Generate**
 
-```bash
-npx web-push generate-vapid-keys
-```
-
-Hasilnya:
-```
-Public Key:  BNabc123...
-Private Key: xyz789...
-```
-
-Simpan kedua key ini — dipakai di langkah berikutnya.
+Simpan:
+- **Public Key** → dipakai di `js/push.js` dan Supabase Secrets
+- **Private Key** → hanya di Supabase Secrets, jangan share
 
 ---
 
-## LANGKAH 2 — Tambahkan VAPID Key ke Aplikasi
+## LANGKAH 2 — Isi VAPID Public Key di Aplikasi
 
-Edit file `js/push.js`, cari baris:
+Edit `js/push.js`, cari dan ganti:
 ```js
 const VAPID_PUBLIC_KEY = 'GANTI_DENGAN_VAPID_PUBLIC_KEY_ANDA';
 ```
-
-Ganti dengan Public Key dari langkah 1:
-```js
-const VAPID_PUBLIC_KEY = 'BNabc123...'; // ← Public Key Anda
-```
+Ganti dengan Public Key dari vapidkeys.com. Deploy ulang ke Netlify.
 
 ---
 
-## LANGKAH 3 — Deploy Edge Function ke Supabase
+## LANGKAH 3 — Deploy Edge Function via Supabase Dashboard
 
-### Install Supabase CLI
-```bash
-C
-supabase login
-```
-
-### Link ke project Anda
-```bash
-supabase link --project-ref [PROJECT_REF]
-```
-Project REF ada di Supabase Dashboard → Project Settings → General → Reference ID
-
-### Deploy function
-```bash
-supabase functions deploy push-reminder --no-verify-jwt
-```
+1. Buka **supabase.com** → pilih project
+2. Klik menu **Edge Functions** di sidebar kiri
+3. Klik **Create a new function**
+4. Nama: `push-reminder`
+5. Copy seluruh isi file `supabase/functions/push-reminder/index.ts`
+6. Paste ke editor → klik **Deploy**
 
 ---
 
 ## LANGKAH 4 — Set Secrets di Supabase
 
-Buka **Supabase Dashboard → Edge Functions → push-reminder → Secrets**
-atau via CLI:
+Buka **Edge Functions → push-reminder → Secrets** lalu tambahkan:
 
-```bash
-supabase secrets set VAPID_PUBLIC_KEY="BNabc123..."
-supabase secrets set VAPID_PRIVATE_KEY="xyz789..."
-supabase secrets set VAPID_SUBJECT="mailto:email_anda@gmail.com"
-supabase secrets set CRON_SECRET="buat_password_acak_di_sini"
-```
-
-> `CRON_SECRET` bebas diisi apa saja — ini password untuk melindungi endpoint function dari akses luar.
+| Name | Value |
+|---|---|
+| `VAPID_PUBLIC_KEY` | Public Key dari vapidkeys.com |
+| `VAPID_PRIVATE_KEY` | Private Key dari vapidkeys.com |
+| `VAPID_SUBJECT` | `mailto:email_anda@gmail.com` |
+| `CRON_SECRET` | Password bebas, contoh: `propmap2026` |
 
 ---
 
-## LANGKAH 5 — Setup Cron Job di Supabase
+## LANGKAH 5 — Aktifkan Extensions di Supabase
 
-Buka **Supabase Dashboard → Database → Extensions**
-Aktifkan extension **pg_cron** jika belum aktif.
+1. Supabase → **Database → Extensions**
+2. Aktifkan **pg_cron**
+3. Aktifkan **pg_net**
 
-Lalu buka **SQL Editor** dan jalankan:
+---
+
+## LANGKAH 6 — Buat Cron Job (Jadwal Harian)
+
+Supabase → **SQL Editor** → jalankan:
 
 ```sql
 -- Kirim reminder setiap hari jam 07:00 WIB (00:00 UTC)
@@ -88,25 +68,24 @@ SELECT cron.schedule(
   '0 0 * * *',
   $$
   SELECT net.http_post(
-    url := 'https://[PROJECT_REF].supabase.co/functions/v1/push-reminder',
-    headers := '{"Content-Type": "application/json", "x-cron-secret": "buat_password_acak_di_sini"}'::jsonb,
-    body := '{}'::jsonb
+    url     := 'https://[PROJECT_REF].supabase.co/functions/v1/push-reminder',
+    headers := '{"Content-Type":"application/json","x-cron-secret":"propmap2026"}'::jsonb,
+    body    := '{}'::jsonb
   );
   $$
 );
 ```
 
-Ganti `[PROJECT_REF]` dengan Reference ID project Anda.
-Ganti `buat_password_acak_di_sini` dengan CRON_SECRET yang sama di langkah 4.
+Ganti `[PROJECT_REF]` dengan Reference ID project (ada di Project Settings → General).
+Ganti `propmap2026` dengan CRON_SECRET yang sama di Langkah 4.
 
 ---
 
-## LANGKAH 6 — Update RLS Tabel push_subscriptions
+## LANGKAH 7 — Jalankan RLS push_subscriptions
 
-Jalankan di Supabase SQL Editor:
+Supabase → **SQL Editor** → jalankan:
 
 ```sql
--- User bisa insert/update/delete subscription sendiri
 DROP POLICY IF EXISTS "User kelola subscription sendiri" ON push_subscriptions;
 
 CREATE POLICY "User insert subscription"
@@ -121,7 +100,6 @@ CREATE POLICY "User delete subscription"
   ON push_subscriptions FOR DELETE
   USING (user_id = auth.uid());
 
--- Service role (Edge Function) bisa baca semua
 CREATE POLICY "Service baca semua subscription"
   ON push_subscriptions FOR SELECT
   USING (true);
@@ -129,46 +107,61 @@ CREATE POLICY "Service baca semua subscription"
 
 ---
 
-## LANGKAH 7 — Test
+## CARA TEST
 
-1. Deploy aplikasi PropMap ke Netlify dengan `js/push.js` yang sudah diupdate
-2. Login sebagai user Pro/Business
-3. Buka Pengaturan → aktifkan toggle Notifikasi
-4. Cek Supabase → Table Editor → `push_subscriptions` — harus ada baris baru
-5. Test kirim manual via curl:
-
-```bash
-curl -X POST \
-  https://[PROJECT_REF].supabase.co/functions/v1/push-reminder \
-  -H "x-cron-secret: buat_password_acak_di_sini"
+### Test 1 — Notifikasi lokal (aplikasi terbuka)
+Buka PropMap → F12 Console → ketik:
+```js
+showNotif('🔔 Test PropMap', 'Notifikasi berhasil!')
 ```
 
+### Test 2 — Edge Function manual
+Buka Supabase → **Edge Functions → push-reminder → Test/Invoke**
+Tambahkan header: `x-cron-secret: propmap2026`
+Klik Send → response harus `{"sent": N}`
+
+### Test 3 — End-to-end lengkap
+1. Login PropMap sebagai user Pro → aktifkan notifikasi
+2. Cek **Supabase → Table Editor → push_subscriptions** — pastikan ada data
+3. Edit konsumen → set Jadwal Follow-up ke hari ini
+4. Trigger manual via SQL Editor:
+```sql
+SELECT net.http_post(
+  url     := 'https://[PROJECT_REF].supabase.co/functions/v1/push-reminder',
+  headers := '{"Content-Type":"application/json","x-cron-secret":"propmap2026"}'::jsonb,
+  body    := '{}'::jsonb
+);
+```
+5. Tunggu 5-10 detik → notifikasi masuk ke HP
+
 ---
 
-## Jadwal Notifikasi
+## JADWAL NOTIFIKASI
 
-| Kondisi | Kapan Dikirim |
+| Kondisi | Waktu Kirim |
 |---|---|
-| Follow-up hari ini | Setiap hari jam 07:00 WIB |
-| Follow-up besok | Setiap hari jam 07:00 WIB |
-| Booking > 7 hari | Setiap kelipatan 7 hari |
-| Berkas belum lengkap | Setiap kelipatan 7 hari (min 7 hari) |
+| Follow-up hari ini | 07:00 WIB setiap hari |
+| Follow-up besok | 07:00 WIB setiap hari |
+| Booking > 7 hari | Tiap kelipatan 7 hari |
+| DP ≥ 14 hari | Tiap kelipatan 7 hari |
+| Berkas belum lengkap ≥ 7 hari | Tiap kelipatan 7 hari |
 
 ---
 
-## Troubleshooting
+## TROUBLESHOOTING
 
-**Notifikasi tidak masuk meski sudah setup:**
-- Cek `push_subscriptions` di Supabase — pastikan ada data endpoint
-- Cek log Edge Function: Supabase Dashboard → Edge Functions → push-reminder → Logs
-- Pastikan VAPID_PUBLIC_KEY di `push.js` sama persis dengan yang di Supabase Secrets
+**`push_subscriptions` kosong setelah aktifkan notifikasi:**
+→ VAPID Public Key di `push.js` belum diisi / masih placeholder
+→ RLS policy belum dijalankan (Langkah 7)
 
-**Error `401 Unauthorized` di Edge Function:**
-- Cek CRON_SECRET di curl sama dengan yang di Supabase Secrets
+**Edge Function error `VAPID keys belum diset`:**
+→ Cek Secrets di Supabase sudah terisi semua
 
-**Subscription tidak tersimpan ke DB:**
-- Pastikan RLS policy push_subscriptions sudah dijalankan (Langkah 6)
+**Notif tidak masuk meski `sent > 0`:**
+→ Cek izin notifikasi di HP — pastikan tidak diblokir di pengaturan browser
+→ Cek Service Worker aktif: F12 → Application → Service Workers
 
----
+**Response `401 Unauthorized` dari Edge Function:**
+→ CRON_SECRET di SQL tidak sama dengan di Supabase Secrets
 
 *PropMap v4.2 · Push Notification Setup Guide*
