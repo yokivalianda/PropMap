@@ -1,7 +1,7 @@
 // PropMap v4.2 — Service Worker
-// Network-first untuk JS/CSS/HTML — cache hanya untuk offline fallback
+// Network-first untuk JS/CSS/HTML + Push Notification
 
-const CACHE_VER = 'propmap-v4-2-' + '20260321';
+const CACHE_VER = 'propmap-v4-2-20260324';
 const SHELL = [
   './', './index.html', './manifest.json',
   './css/main.css',
@@ -19,16 +19,17 @@ self.addEventListener('install', e => {
       Promise.allSettled(SHELL.map(url => c.add(url).catch(() => {})))
     )
   );
-  // Aktifkan SW baru langsung tanpa menunggu tab lama tutup
   self.skipWaiting();
 });
 
 // ── ACTIVATE — hapus cache lama ──────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_VER).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_VER).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -36,47 +37,50 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // External APIs — network only, jangan cache
+  // External — skip, biarkan browser handle
   const isExternal = [
     'supabase.co','supabase.io','googleapis.com',
     'gstatic.com','jsdelivr.net','cdnjs.cloudflare.com'
   ].some(h => url.hostname.includes(h));
   if (isExternal) return;
 
-  // POST / non-GET — network only
   if (e.request.method !== 'GET') return;
 
-  const isAppFile = url.pathname.endsWith('.js')
-    || url.pathname.endsWith('.css')
-    || url.pathname.endsWith('.html')
-    || url.pathname === '/'
-    || url.pathname.endsWith('/');
+  const isAppFile =
+    url.pathname.endsWith('.js')   ||
+    url.pathname.endsWith('.css')  ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/'           ||
+    url.pathname.endsWith('/');
 
   if (isAppFile) {
-    // NETWORK-FIRST untuk JS/CSS/HTML
-    // → Selalu ambil dari server dulu
-    // → Kalau offline, fallback ke cache
+    // Network-first: selalu ambil versi terbaru dari server
     e.respondWith(
-      fetch(e.request).then(res => {
-        if (res.ok) {
-          // Simpan versi terbaru ke cache untuk offline
-          caches.open(CACHE_VER).then(c => c.put(e.request, res.clone()));
-        }
-        return res;
-      }).catch(() =>
-        // Offline: kembalikan dari cache
-        caches.match(e.request).then(cached =>
-          cached || caches.match('./index.html')
+      fetch(e.request)
+        .then(res => {
+          if (res.ok) {
+            // Clone DULU sebelum dipakai — fix "body already used"
+            const resClone = res.clone();
+            caches.open(CACHE_VER).then(c => c.put(e.request, resClone));
+          }
+          return res;
+        })
+        .catch(() =>
+          // Offline fallback
+          caches.match(e.request)
+            .then(cached => cached || caches.match('./index.html'))
         )
-      )
     );
   } else {
-    // File lain (gambar, font, dll) — cache first
+    // Cache-first untuk aset lain (gambar, font, dll)
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(res => {
-          if (res.ok) caches.open(CACHE_VER).then(c => c.put(e.request, res.clone()));
+          if (res.ok) {
+            const resClone = res.clone();
+            caches.open(CACHE_VER).then(c => c.put(e.request, resClone));
+          }
           return res;
         }).catch(() => caches.match('./index.html'));
       })
@@ -103,7 +107,7 @@ self.addEventListener('push', e => {
     vibrate: [200, 100, 200],
     requireInteraction: false,
     actions: d.data?.konsumenId ? [
-      { action: 'open', title: 'Lihat Detail' },
+      { action: 'open',    title: 'Lihat Detail' },
       { action: 'dismiss', title: 'Tutup' },
     ] : [],
   };
@@ -116,18 +120,25 @@ self.addEventListener('push', e => {
 // ── NOTIFICATION CLICK ────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+
+  if (e.action === 'dismiss') return;
+
   const konsumenId = e.notification.data?.konsumenId;
+
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      for (const c of list) {
-        if (c.url.includes(self.registration.scope)) {
-          c.focus();
-          if (konsumenId) c.postMessage({ type: 'NOTIFICATION_CLICK', konsumenId });
-          return;
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(list => {
+        // Cari tab yang sudah terbuka
+        for (const c of list) {
+          if (c.url.includes(self.registration.scope)) {
+            c.focus();
+            if (konsumenId) c.postMessage({ type: 'NOTIFICATION_CLICK', konsumenId });
+            return;
+          }
         }
-      }
-      return clients.openWindow('/');
-    })
+        // Buka tab baru
+        return clients.openWindow('/');
+      })
   );
 });
 
@@ -136,9 +147,11 @@ self.addEventListener('message', e => {
   if (e.data?.type === 'SHOW_NOTIFICATION') {
     const d = e.data;
     self.registration.showNotification(d.title || 'PropMap', {
-      body: d.body || '', icon: d.icon || '/manifest.json',
-      badge: '/manifest.json', tag: d.tag || 'mp-' + Date.now(),
-      data: { konsumenId: d.data?.konsumenId, url: d.url },
+      body:    d.body    || '',
+      icon:    d.icon    || '/icons/icon-192.png',
+      badge:   d.badge   || '/icons/icon-72.png',
+      tag:     d.tag     || 'propmap-' + Date.now(),
+      data:    { konsumenId: d.data?.konsumenId, url: d.url },
       vibrate: [200, 100, 200],
     });
   }
