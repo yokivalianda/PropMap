@@ -1,12 +1,13 @@
 // PropMap — Service Worker v4.2
 // Standar PWABuilder 2026: Network-first + Push + Background Sync + Offline fallback
 
-const CACHE_NAME    = 'propmap-v4-2-20260324';
-const OFFLINE_URL   = '/index.html';
+const CACHE_NAME    = 'propmap-v4-3-20260328';
+const OFFLINE_URL   = '/offline.html';
 
 const PRECACHE = [
   '/',
   '/index.html',
+  '/offline.html',
   '/manifest.json',
   '/css/main.css',
   '/js/config.js',
