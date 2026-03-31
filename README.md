@@ -220,7 +220,6 @@ A: Prospek belum dihitung di Total Konsumen dashboard. Booking sudah ada komitme
 
 **Q: Bisa dipakai offline?**
 A: Ya. Data ter-cache di IndexedDB, tambah/edit saat offline masuk antrian sync otomatis.
----
 
 ## 📄 Lisensi
 
