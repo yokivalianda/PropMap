@@ -246,6 +246,37 @@ Deno.serve(async (req) => {
   const invalidEndpoints: string[] = [];
   const errs: string[] = [];
 
+  // ── MODE TEST ─────────────────────────────────────
+  // Kirim notifikasi ke SEMUA subscriber, abaikan semua kondisi tanggal/status
+  // Aktifkan dengan: POST /push-reminder?test=true
+  const url = new URL(req.url);
+  const isTestMode = url.searchParams.get('test') === 'true';
+
+  if (isTestMode) {
+    for (const sub of subs) {
+      const res = await sendPush(
+        sub.endpoint, sub.p256dh, sub.auth,
+        '🔔 PropMap — Test Notifikasi',
+        `Push notification berhasil! VAPID & enkripsi berfungsi. (${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB)`,
+      );
+      if (res.ok) {
+        sent++;
+      } else if (res.status === 410 || res.status === 404) {
+        invalidEndpoints.push(sub.endpoint);
+      } else {
+        errs.push(`${sub.user_id}: ${res.error}`);
+      }
+    }
+    if (invalidEndpoints.length) {
+      await supabase.from('push_subscriptions').delete().in('endpoint', invalidEndpoints);
+    }
+    return new Response(
+      JSON.stringify({ mode: 'TEST', sent, invalid_removed: invalidEndpoints.length, errors: errs }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  // ─────────────────────────────────────────────────
+
   for (const sub of subs) {
     const myKons = allKons.filter(k => k.owner_id === sub.user_id);
     const notifs: { title: string; body: string; konsumenId: string }[] = [];
