@@ -464,7 +464,7 @@ async function hapusBerkasItem(konsumenId, key) {
   } else {
     showToast('Gagal menghapus', '❌');
   }
-  openDetail(id);
+  openDetail(konsumenId); // [FIX #1] was `id` (undefined) → konsumenId
 }
 
 async function addLog(id) {

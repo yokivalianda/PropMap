@@ -177,7 +177,7 @@ async function doRegister() {
   }
 }
 
-// ── FORGOT PASSWORD ───────────────────────────────
+// ── FORGOT PASSWORD ────────────────────────────────────────────────
 async function doForgotPassword() {
   const email = document.getElementById('forgotEmail').value.trim();
   if (!email) { showForgotErr('Masukkan email Anda terlebih dahulu'); return; }
@@ -187,13 +187,15 @@ async function doForgotPassword() {
   try {
     const redirectTo = window.location.origin + window.location.pathname;
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+    // [FIX #6] Tampilkan error jika gagal, jangan silent fail
     if (error) throw error;
-  } catch(e) {
-    console.warn('resetPasswordForEmail:', e.message);
-  } finally {
-    setBtnLoading('btnForgot', false, 'Kirim Link Reset →');
+    // Hanya tampilkan sukses jika benar-benar berhasil
     document.getElementById('forgotForm').style.display = 'none';
     document.getElementById('forgotOk').classList.add('show');
+  } catch(e) {
+    showForgotErr(e.message || 'Gagal mengirim link reset. Periksa koneksi Anda.');
+  } finally {
+    setBtnLoading('btnForgot', false, 'Kirim Link Reset →');
   }
 }
 
@@ -223,10 +225,27 @@ async function doSetNewPassword() {
   }
 }
 
-// ── LOGOUT ───────────────────────────────────────
+// ── LOGOUT ───────────────────────────────────────────────
 async function doLogout() {
   const ok = await showConfirm('Akhiri sesi dan keluar dari PropMap?', '🚪 Keluar', 'Ya, Keluar', false);
   if (!ok) return;
+
+  // [FIX #9] Hapus push subscription dari DB dan browser sebelum logout
+  try {
+    if (typeof removePushSubscription === 'function') await removePushSubscription();
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready.catch(() => null);
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription().catch(() => null);
+        if (sub) await sub.unsubscribe();
+      }
+    }
+    localStorage.removeItem('pm_push_endpoint');
+    localStorage.removeItem('pm_push_disabled');
+  } catch(e) {
+    console.warn('Logout push cleanup:', e);
+  }
+
   if (rtChan) { sb.removeChannel(rtChan); rtChan = null; }
   await sb.auth.signOut();
   me = null; myProf = null; allKons = []; allProfs = [];
