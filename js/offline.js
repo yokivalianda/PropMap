@@ -116,15 +116,17 @@ async function markQueueDone(qid) {
 }
 
 async function clearDoneQueue() {
-  const tx = idbTx(STORE_QUEUE, 'readwrite');
-  if (!tx) return;
-  const all = await new Promise(resolve => {
-    const r = tx.getAll();
-    r.onsuccess = () => resolve(r.result || []);
-    r.onerror   = () => resolve([]);
-  });
-  all.filter(r => r.status === 'done').forEach(r => {
-    idbTx(STORE_QUEUE, 'readwrite')?.delete(r.qid);
+  // [FIX #4] Gunakan satu transaksi tunggal dari awal sampai akhir — atomic, tidak ada race condition
+  if (!idb) return;
+  return new Promise(resolve => {
+    const tx    = idb.transaction(STORE_QUEUE, 'readwrite');
+    const store = tx.objectStore(STORE_QUEUE);
+    const req   = store.getAll();
+    req.onsuccess = () => {
+      (req.result || []).filter(r => r.status === 'done').forEach(r => store.delete(r.qid));
+      resolve();
+    };
+    req.onerror = () => resolve();
   });
 }
 
@@ -186,6 +188,12 @@ function triggerSync() {
 // Wrapper untuk saveKons offline-aware
 async function saveKonsOffline(obj, eid) {
   if (isOnline) return false; // Gunakan flow normal
+
+  // [FIX #7] Cek limit konsumen untuk user free saat offline INSERT
+  if (!eid && typeof checkKonsumenLimit === 'function' && !checkKonsumenLimit()) {
+    if (typeof openUpgradeModal === 'function') openUpgradeModal('limit_konsumen');
+    return true; // sudah dihandle (tolak)
+  }
 
   const k = eid ? allKons.find(k => k.id === eid) : null;
   const id = eid || crypto.randomUUID();

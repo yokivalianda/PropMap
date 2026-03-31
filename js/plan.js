@@ -213,30 +213,6 @@ async function submitCheckout() {
   setBtnLoading('btnCheckout', false, 'Lanjut Pembayaran →');
 }
 
-// ── COPY TO CLIPBOARD ─────────────────────────────
-function copyRekening(noRek, btn) {
-  navigator.clipboard.writeText(noRek).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = '✓ Disalin!';
-    btn.style.color = 'var(--emerald)';
-    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
-    showToast('Nomor rekening disalin', '📋');
-  }).catch(() => showToast('Gagal menyalin — salin manual', '⚠️'));
-}
-
-function copyOrderId(btn) {
-  const el = document.getElementById('cpiOrderId') || document.getElementById('checkoutOrderId');
-  const text = el?.textContent?.trim();
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = '✓ Disalin!';
-    btn.style.color = 'var(--emerald)';
-    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
-    showToast('Order ID disalin', '📋');
-  }).catch(() => showToast('Gagal menyalin — salin manual', '⚠️'));
-}
-
 // ── AKTIVASI MANUAL OLEH ADMIN (setelah konfirmasi bayar) ─
 async function activatePlan(userId, plan, months) {
   if (myProf?.role !== 'admin') return;

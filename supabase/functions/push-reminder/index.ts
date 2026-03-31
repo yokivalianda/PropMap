@@ -7,10 +7,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const VAPID_PUBLIC  = Deno.env.get('VAPID_PUBLIC_KEY')  ?? '';
+const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
 const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
-const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT')     ?? 'mailto:admin@propmap.id';
-const CRON_SECRET   = Deno.env.get('CRON_SECRET')       ?? '';
+const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:yokivalianda14@gmail.com';
+const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
 // ── BASE64URL HELPERS ─────────────────────────────
 function b64urlEncode(buf: ArrayBuffer | Uint8Array): string {
@@ -73,8 +73,8 @@ async function generateVapidAuth(audience: string): Promise<string> {
   );
 
   const enc = new TextEncoder();
-  const header  = b64urlEncode(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-  const now     = Math.floor(Date.now() / 1000);
+  const header = b64urlEncode(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const now = Math.floor(Date.now() / 1000);
   const payload = b64urlEncode(enc.encode(JSON.stringify({
     aud: audience, exp: now + 86400, sub: VAPID_SUBJECT,
   })));
@@ -125,15 +125,15 @@ async function encryptPayload(
   // RFC 8291 key derivation
   const enc = new TextEncoder();
   const keyInfo = concat(enc.encode('WebPush: info\0'), subscriberPublicRaw, ephemeralPublicRaw);
-  const ikm    = await hkdf(authSecret, sharedSecret, keyInfo, 32);
+  const ikm = await hkdf(authSecret, sharedSecret, keyInfo, 32);
 
-  const salt     = crypto.getRandomValues(new Uint8Array(16));
-  const cek      = await hkdf(salt, ikm, enc.encode('Content-Encoding: aes128gcm\0'), 16);
-  const nonce    = await hkdf(salt, ikm, enc.encode('Content-Encoding: nonce\0'), 12);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, enc.encode('Content-Encoding: aes128gcm\0'), 16);
+  const nonce = await hkdf(salt, ikm, enc.encode('Content-Encoding: nonce\0'), 12);
 
   // Pad + encrypt (0x02 = final record delimiter)
-  const padded   = concat(plaintext, new Uint8Array([2]));
-  const aesKey   = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
+  const padded = concat(plaintext, new Uint8Array([2]));
+  const aesKey = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
   const ciphertext = new Uint8Array(
     await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, padded)
   );
@@ -156,26 +156,26 @@ async function sendPush(
   try {
     const payload = JSON.stringify({
       title, body,
-      icon:  '/icons/icon-192.png',
+      icon: '/icons/icon-192.png',
       badge: '/icons/icon-72.png',
-      tag:   'propmap-' + Date.now(),
-      data:  { konsumenId: konsumenId ?? '' },
+      tag: 'propmap-' + Date.now(),
+      data: { konsumenId: konsumenId ?? '' },
     });
 
     const encrypted = await encryptPayload(p256dh, auth, payload);
 
-    const url      = new URL(endpoint);
+    const url = new URL(endpoint);
     const audience = `${url.protocol}//${url.host}`;
     const vapidAuth = await generateVapidAuth(audience);
 
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type':     'application/octet-stream',
+        'Content-Type': 'application/octet-stream',
         'Content-Encoding': 'aes128gcm',
-        'Authorization':     vapidAuth,
-        'TTL':              '86400',
-        'Urgency':          'normal',
+        'Authorization': vapidAuth,
+        'TTL': '86400',
+        'Urgency': 'normal',
       },
       body: encrypted,
     });
@@ -209,10 +209,10 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
-  const now      = new Date();
+  const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
-  const tom      = new Date(now); tom.setDate(now.getDate() + 1);
-  const tomStr   = tom.toISOString().split('T')[0];
+  const tom = new Date(now); tom.setDate(now.getDate() + 1);
+  const tomStr = tom.toISOString().split('T')[0];
 
   // Ambil semua push subscriptions
   const { data: subs, error: subErr } = await supabase
@@ -246,6 +246,37 @@ Deno.serve(async (req) => {
   const invalidEndpoints: string[] = [];
   const errs: string[] = [];
 
+  // ── MODE TEST ─────────────────────────────────────
+  // Kirim notifikasi ke SEMUA subscriber, abaikan semua kondisi tanggal/status
+  // Aktifkan dengan: POST /push-reminder?test=true
+  const url = new URL(req.url);
+  const isTestMode = url.searchParams.get('test') === 'true';
+
+  if (isTestMode) {
+    for (const sub of subs) {
+      const res = await sendPush(
+        sub.endpoint, sub.p256dh, sub.auth,
+        '🔔 PropMap — Test Notifikasi',
+        `Push notification berhasil! VAPID & enkripsi berfungsi. (${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB)`,
+      );
+      if (res.ok) {
+        sent++;
+      } else if (res.status === 410 || res.status === 404) {
+        invalidEndpoints.push(sub.endpoint);
+      } else {
+        errs.push(`${sub.user_id}: ${res.error}`);
+      }
+    }
+    if (invalidEndpoints.length) {
+      await supabase.from('push_subscriptions').delete().in('endpoint', invalidEndpoints);
+    }
+    return new Response(
+      JSON.stringify({ mode: 'TEST', sent, invalid_removed: invalidEndpoints.length, errors: errs }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  // ─────────────────────────────────────────────────
+
   for (const sub of subs) {
     const myKons = allKons.filter(k => k.owner_id === sub.user_id);
     const notifs: { title: string; body: string; konsumenId: string }[] = [];
@@ -255,7 +286,7 @@ Deno.serve(async (req) => {
       if (k.tgl_followup === todayStr) {
         notifs.push({
           title: '📅 Follow-up Hari Ini!',
-          body:  `${k.nama}${k.unit ? ' · ' + k.unit : ''} — segera hubungi!`,
+          body: `${k.nama}${k.unit ? ' · ' + k.unit : ''} — segera hubungi!`,
           konsumenId: k.id,
         });
       }
@@ -263,7 +294,7 @@ Deno.serve(async (req) => {
       if (k.tgl_followup === tomStr) {
         notifs.push({
           title: '📅 Reminder Follow-up Besok',
-          body:  `${k.nama} — jadwal follow-up besok`,
+          body: `${k.nama} — jadwal follow-up besok`,
           konsumenId: k.id,
         });
       }
@@ -273,7 +304,7 @@ Deno.serve(async (req) => {
         if (days > 0 && days % 7 === 0) {
           notifs.push({
             title: '⏰ Konsumen Perlu Ditindaklanjuti',
-            body:  `${k.nama} sudah ${days} hari sejak booking — segera follow up!`,
+            body: `${k.nama} sudah ${days} hari sejak booking — segera follow up!`,
             konsumenId: k.id,
           });
         }
@@ -284,20 +315,20 @@ Deno.serve(async (req) => {
         if (days >= 14 && days % 7 === 0) {
           notifs.push({
             title: '💰 Proses DP Masih Berlangsung',
-            body:  `${k.nama} — Proses DP sudah ${days} hari`,
+            body: `${k.nama} — Proses DP sudah ${days} hari`,
             konsumenId: k.id,
           });
         }
       }
       // Berkas belum lengkap >= 7 hari (tiap 7 hari)
       if (k.status === 'berkas' && k.tgl_booking) {
-        const days  = Math.floor((now.getTime() - new Date(k.tgl_booking).getTime()) / 86400000);
+        const days = Math.floor((now.getTime() - new Date(k.tgl_booking).getTime()) / 86400000);
         const kurang = (Array.isArray(k.berkas) ? k.berkas : [])
           .filter((b: { done: boolean }) => !b.done).length;
         if (days >= 7 && kurang > 0 && days % 7 === 0) {
           notifs.push({
             title: '📁 Berkas Belum Lengkap',
-            body:  `${k.nama} — ${kurang} berkas masih kurang`,
+            body: `${k.nama} — ${kurang} berkas masih kurang`,
             konsumenId: k.id,
           });
         }

@@ -1,4 +1,9 @@
-// ── NAVIGATION ───────────────────────────────────
+// ── NAVIGATION ───────────────────────────────────────────────
+// [FIX #3] Helper escape HTML untuk cegah XSS di konten user
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function switchPage(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
@@ -52,7 +57,9 @@ function renderDash() {
   }
 
   // Upcoming follow-ups
-  const upcoming = k.filter(x => x.tgl_followup && new Date(x.tgl_followup) >= new Date(new Date().toDateString())).sort((a, b) => new Date(a.tgl_followup) - new Date(b.tgl_followup)).slice(0, 3);
+  // [FIX #5] Gunakan midnight lokal, bukan new Date(toDateString()) untuk timezone safety
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const upcoming = k.filter(x => x.tgl_followup && new Date(x.tgl_followup + 'T00:00:00') >= todayMid).sort((a, b) => new Date(a.tgl_followup) - new Date(b.tgl_followup)).slice(0, 3);
   const upEl = document.getElementById('upcomingFollowup');
   if (upEl) {
     upEl.innerHTML = upcoming.length
@@ -431,19 +438,27 @@ async function openDetail(id) {
   const k = allKons.find(x => x.id === id); if (!k) return;
   const canEdit = myProf?.role === 'admin' || k.owner_id === me.id;
   const ci = Math.abs(hsh(id)) % 8;
-  const logHtml = (k.log || []).slice().reverse().map(l => `
-    <div class="tl-item">
+  // [FIX #3] Escape log content untuk cegah XSS
+  const logHtml = (k.log || []).slice().reverse().map(l =>
+    `<div class="tl-item">
       <div class="tl-dot">📌</div>
       <div class="tl-body">
-        <div class="tl-action">${l.action}</div>
+        <div class="tl-action">${escHtml(l.action)}</div>
         <div class="tl-time">${fDate(l.time)}</div>
-        ${l.note ? `<div class="tl-note">${l.note}</div>` : ''}
+        ${l.note ? `<div class="tl-note">${escHtml(l.note)}</div>` : ''}
       </div>
     </div>`).join('') || `<div style="color:var(--text-4);font-size:12px;padding:8px 0">Belum ada log</div>`;
 
+  // [FIX #10] Normalisasi nomor HP: +628xxx, 628xxx, 08xxx → 628xxx (tanpa spasi)
+  const normalizePhone = (hp) => {
+    const digits = (hp || '').replace(/[\s\-().]/g, '');
+    if (digits.startsWith('+62')) return digits.slice(1);  // +628xxx → 628xxx
+    if (digits.startsWith('62'))  return digits;           // sudah benar
+    if (digits.startsWith('0'))   return '62' + digits.slice(1); // 08xxx → 628xxx
+    return '62' + digits;
+  };
   // Skeleton dulu biar modal langsung terbuka
-  document.getElementById('detailSheet').innerHTML = `
-    <div class="sheet-pill"></div>
+  document.getElementById('detailSheet').innerHTML = `<div class="sheet-pill"></div>
     <div class="sheet-head">
       <div class="sheet-title">Detail Konsumen</div>
       <button class="sheet-close" onclick="closeModal('modalDetail')">✕</button>
@@ -451,15 +466,15 @@ async function openDetail(id) {
     <div class="det-hero">
       <div class="det-avatar av${ci}">${k.nama.charAt(0).toUpperCase()}</div>
       <div>
-        <div class="det-name">${k.nama}</div>
-        <div class="det-unit">${k.unit || '—'} · Kav. ${k.kavling || '—'}</div>
+        <div class="det-name">${escHtml(k.nama)}</div>
+        <div class="det-unit">${escHtml(k.unit) || '—'} · Kav. ${escHtml(k.kavling) || '—'}</div>
         <span class="s-badge s-${k.status}" style="display:inline-block;margin-top:6px">${sLabel(k.status)}</span>
         ${k.tgl_followup ? `<div style="font-size:11px;color:var(--amber);margin-top:4px;font-weight:600">📅 Follow-up: ${fDateShort(k.tgl_followup)}</div>` : ''}
       </div>
     </div>
     <div class="qa-row">
       <button class="qa-btn qa-call" onclick="window.open('tel:${k.hp}')"><span class="qa-ico">📞</span>Telepon</button>
-      <button class="qa-btn qa-wa"   onclick="window.open('https://wa.me/62${(k.hp || '').replace(/^0/, '')}')"><span class="qa-ico">💬</span>WhatsApp</button>
+      <button class="qa-btn qa-wa"   onclick="window.open('https://wa.me/${normalizePhone(k.hp)}')"><span class="qa-ico">💬</span>WhatsApp</button>
       ${canEdit ? `<button class="qa-btn qa-edit" onclick="openEditModal('${id}')"><span class="qa-ico">✏️</span>Edit</button>` : '<div></div>'}
       <button class="qa-btn qa-log"  onclick="addLog('${id}')"><span class="qa-ico">📝</span>Catat</button>
     </div>
@@ -473,10 +488,10 @@ async function openDetail(id) {
       <div class="det-row"><span class="det-key">Pembiayaan</span><span class="det-val">${kprLabel(k.kpr)}</span></div>
       <div class="det-row"><span class="det-key">Sumber</span><span class="det-val">${sumberLabel(k.sumber)}</span></div>
       <div class="det-row"><span class="det-key">Marketing</span><span class="det-val">${ownerName(k.owner_id)}</span></div>
-      ${k.catatan ? `<div class="det-row" style="flex-direction:column;gap:6px"><span class="det-key">Catatan</span><div class="tl-note">${k.catatan}</div></div>` : ''}
+      ${k.catatan ? `<div class="det-row" style="flex-direction:column;gap:6px"><span class="det-key">Catatan</span><div class="tl-note">${escHtml(k.catatan)}</div></div>` : ''}
     </div>
     <div class="det-section" id="berkasSection">
-      <div class="det-sec-label">Checklist Berkas & Dokumen</div>
+      <div class="det-sec-label">Checklist Berkas &amp; Dokumen</div>
       <div class="berkas-loading">
         <div class="berkas-skeleton"></div><div class="berkas-skeleton"></div>
         <div class="berkas-skeleton"></div><div class="berkas-skeleton"></div>

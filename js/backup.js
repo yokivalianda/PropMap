@@ -156,6 +156,13 @@ async function confirmRestore() {
     const effectiveMode = myProf?.role === 'admin' ? mode : 'merge';
 
     if (effectiveMode === 'replace') {
+      // [FIX #8] Tambah verifikasi ketik "HAPUS" sebelum hapus semua data
+      const typed = window.prompt('⚠️ Mode REPLACE akan menghapus SEMUA data konsumen.\n\nKetik "HAPUS" untuk melanjutkan:');
+      if ((typed || '').trim().toUpperCase() !== 'HAPUS') {
+        setBtnLoading('btnRestoreConfirm', false, '⚠ Pulihkan Data');
+        showToast('Restore dibatalkan — konfirmasi tidak sesuai', '⚠️');
+        return;
+      }
       updateProgress('Menghapus data lama...');
       await sb.from('konsumen').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     }
