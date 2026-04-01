@@ -58,6 +58,7 @@ function renderDash() {
 
   // Upcoming follow-ups
   // [FIX #5] Gunakan midnight lokal, bukan new Date(toDateString()) untuk timezone safety
+  const now = new Date();
   const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const upcoming = k.filter(x => x.tgl_followup && new Date(x.tgl_followup + 'T00:00:00') >= todayMid).sort((a, b) => new Date(a.tgl_followup) - new Date(b.tgl_followup)).slice(0, 3);
   const upEl = document.getElementById('upcomingFollowup');

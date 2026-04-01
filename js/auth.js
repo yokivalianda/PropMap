@@ -230,21 +230,11 @@ async function doLogout() {
   const ok = await showConfirm('Akhiri sesi dan keluar dari PropMap?', '🚪 Keluar', 'Ya, Keluar', false);
   if (!ok) return;
 
-  // [FIX #9] Hapus push subscription dari DB dan browser sebelum logout
-  try {
-    if (typeof removePushSubscription === 'function') await removePushSubscription();
-    if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready.catch(() => null);
-      if (reg) {
-        const sub = await reg.pushManager.getSubscription().catch(() => null);
-        if (sub) await sub.unsubscribe();
-      }
-    }
-    localStorage.removeItem('pm_push_endpoint');
-    localStorage.removeItem('pm_push_disabled');
-  } catch(e) {
-    console.warn('Logout push cleanup:', e);
-  }
+  // JANGAN hapus push subscription dari DB maupun browser saat logout.
+  // Subscription harus tetap aktif agar server (push-reminder) bisa
+  // mengirim push notification ke device ini meski user tidak sedang login.
+  // Cukup reset state lokal saja.
+  pushEnabled = false;
 
   if (rtChan) { sb.removeChannel(rtChan); rtChan = null; }
   await sb.auth.signOut();

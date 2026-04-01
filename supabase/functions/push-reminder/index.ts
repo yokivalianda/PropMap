@@ -247,10 +247,14 @@ Deno.serve(async (req) => {
   const errs: string[] = [];
 
   // ── MODE TEST ─────────────────────────────────────
-  // Kirim notifikasi ke SEMUA subscriber, abaikan semua kondisi tanggal/status
-  // Aktifkan dengan: POST /push-reminder?test=true
+  // Aktifkan via query param: ?test=true
+  // ATAU via request body: { "test": true }  ← bisa dipakai dari Supabase Dashboard
   const url = new URL(req.url);
-  const isTestMode = url.searchParams.get('test') === 'true';
+  let isTestMode = url.searchParams.get('test') === 'true';
+  try {
+    const body = await req.json().catch(() => ({}));
+    if (body?.test === true) isTestMode = true;
+  } catch (_) { /* body bukan JSON, abaikan */ }
 
   if (isTestMode) {
     for (const sub of subs) {
