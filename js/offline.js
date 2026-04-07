@@ -211,7 +211,7 @@ async function saveKonsOffline(obj, eid) {
       ...obj, id,
       owner_id:   me.id,
       owner_name: myProf?.full_name || me.email,
-      berkas:     [],
+      berkas:     { ktp: false, kk: false, slip: false, tabungan: false, npwp: false, surat: false },
       log:        [{ action: 'Konsumen ditambahkan (offline)', time: new Date().toISOString(), note: obj.catatan }],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

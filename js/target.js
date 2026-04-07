@@ -60,8 +60,9 @@ function renderTargetSection() {
   try {
 
   const now      = new Date();
-  const tahun    = now.getFullYear();
-  const bulan    = now.getMonth() + 1;
+  // Baca nilai selector yang sudah ada (jika tersedia) agar filter tidak ter-reset
+  const tahun    = parseInt(document.getElementById('targetTahunSel')?.value) || now.getFullYear();
+  const bulan    = parseInt(document.getElementById('targetBulanSel')?.value) || now.getMonth() + 1;
   const isAdmin  = myProf?.role === 'admin';
 
   if (isAdmin) {
@@ -88,7 +89,7 @@ function renderTargetMarketing(el, tahunNow, bulanNow) {
   const targetNow = getTargetBulan(me.id, tahunNow, bulanNow);
   const selesaiNow = allKons.filter(k => {
     if (k.status !== 'selesai' || k.owner_id !== me.id) return false;
-    const d = new Date(k.created_at);
+    const d = new Date(k.updated_at || k.created_at);
     return d.getFullYear() === tahunNow && d.getMonth() + 1 === bulanNow;
   }).length;
   const pct = Math.min(Math.round(selesaiNow / targetNow * 100), 100);
@@ -120,7 +121,7 @@ function renderTargetMarketing(el, tahunNow, bulanNow) {
         const t = getTargetBulan(me.id, m.tahun, m.bulan);
         const s = allKons.filter(k => {
           if (k.status !== 'selesai' || k.owner_id !== me.id) return false;
-          const d = new Date(k.created_at);
+          const d = new Date(k.updated_at || k.created_at);
           return d.getFullYear() === m.tahun && d.getMonth() + 1 === m.bulan;
         }).length;
         const p = Math.min(Math.round(s / t * 100), 100);
@@ -186,7 +187,7 @@ function renderTargetAdminGrid() {
     const t = getTargetBulan(p.id, tahun, bulan);
     const s = allKons.filter(k => {
       if (k.status !== 'selesai' || k.owner_id !== p.id) return false;
-      const d = new Date(k.created_at);
+      const d = new Date(k.updated_at || k.created_at);
       return d.getFullYear() === tahun && d.getMonth() + 1 === bulan;
     }).length;
     const pct = Math.min(Math.round(s / t * 100), 100);
@@ -240,7 +241,7 @@ function renderTargetAdminGrid() {
           const t = getTargetBulan(p.id, m.tahun, m.bulan);
           const s = allKons.filter(k => {
             if (k.status !== 'selesai' || k.owner_id !== p.id) return false;
-            const d = new Date(k.created_at);
+            const d = new Date(k.updated_at || k.created_at);
             return d.getFullYear() === m.tahun && d.getMonth() + 1 === m.bulan;
           }).length;
           const pct = Math.min(Math.round(s/t*100), 100);
