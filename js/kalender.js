@@ -71,7 +71,8 @@ function renderCalEvents(evMap) {
     displayEvents = selectedEvents;
     titleTxt = `Follow-up ${new Date(calSelected + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}`;
   } else {
-    const today = new Date(new Date().toDateString());
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const today = new Date(todayStr + 'T00:00:00');
     const limit = new Date(today); limit.setDate(today.getDate() + 14);
     displayEvents = allKons
       .filter(k => k.tgl_followup && new Date(k.tgl_followup + 'T00:00:00') >= today && new Date(k.tgl_followup + 'T00:00:00') <= limit)

@@ -195,7 +195,7 @@ function renderCharts() {
     chartPipeline = new Chart(c1, {
       type: 'doughnut',
       data: {
-        labels: ['Prospek Konsumen','Booking','Proses DP','Kumpul Berkas','Selesai','Batal'],
+        labels: ['Prospek Konsumen','Booking','Proses DP','Kumpul Berkas','SP3K/ACC','Selesai','Batal'],
         datasets: [{ data: counts, backgroundColor: [cl.sky, cl.brand, cl.amber, cl.violet, '#ec4899', cl.emerald, cl.rose], borderWidth: 0, hoverOffset: 6 }]
       },
       options: {
